@@ -33,17 +33,23 @@ func GetByID(id int, db *sql.DB) (User, error) {
 
 // GetByCookie .
 func GetByCookie(c string, db *sql.DB) (User, error) {
+	uid := GetIDByCookie(c, db)
+	return GetByID(uid, db)
+}
+
+// GetIDByCookie fetches the user ID associated with a cookie from database
+func GetIDByCookie(c string, db *sql.DB) int {
 	if len(c) > 32 {
 		c = c[4:36]
 	}
 	rows, err := db.Query(`SELECT data FROM sessions WHERE sid = "` + c + `"`)
 	if err != nil {
-		return User{}, err
+		return -1
 	}
 	var data string
 	rows.Next()
 	rows.Scan(&data)
-	return GetByID(parseUserID(data), db)
+	return parseUserID(data)
 }
 
 func parseUserID(data string) int {
