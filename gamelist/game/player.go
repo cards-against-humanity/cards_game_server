@@ -1,6 +1,6 @@
 package game
 
-import "../user"
+import "../../user"
 
 type player struct {
 	user  user.User
