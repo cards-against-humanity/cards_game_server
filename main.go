@@ -19,5 +19,5 @@ func main() {
 	defer db.Close()
 	fmt.Println("Successfully connected to database!")
 
-	server.StartHTTP()
+	server.StartHTTP(db)
 }
