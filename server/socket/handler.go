@@ -10,6 +10,12 @@ type Handler struct {
 	sToU map[socketio.Socket]int
 }
 
+// Action - A Redux-Socket.IO action
+type Action struct {
+	Type    string      `json:"type"`
+	Payload interface{} `json:"payload"`
+}
+
 // CreateHandler generates a socket handler
 func CreateHandler() Handler {
 	return Handler{uToS: make(map[int][]socketio.Socket), sToU: make(map[socketio.Socket]int)}
@@ -44,24 +50,24 @@ func (h Handler) Remove(s *socketio.Socket) {
 	}
 }
 
-// SendDataToUser sends data to all sockets belonging to a particular user
-func (h Handler) SendDataToUser(userID int, dataType string, data string) {
+// SendActionToUser sends data to all sockets belonging to a particular user
+func (h Handler) SendActionToUser(userID int, dataType string, action Action) {
 	if _, ok := h.uToS[userID]; ok {
 		for _, s := range h.uToS[userID] {
-			s.Emit(dataType, data)
+			s.Emit(dataType, action)
 		}
 	}
 }
 
-// SendDataToUsers sends data to all sockets belonging to a list of users
-func (h Handler) SendDataToUsers(userIDs []int, dataType string, data string) {
+// SendActionToUsers sends data to all sockets belonging to a list of users
+func (h Handler) SendActionToUsers(userIDs []int, dataType string, action Action) {
 	for _, id := range userIDs {
-		h.SendDataToUser(id, dataType, data)
+		h.SendActionToUser(id, dataType, action)
 	}
 }
 
-// SendDataToAllUsers sends data to all sockets
-func (h Handler) SendDataToAllUsers(dataType string, data string) {
+// SendActionToAllUsers sends data to all sockets
+func (h Handler) SendActionToAllUsers(dataType string, data interface{}) {
 	for s := range h.sToU {
 		s.Emit(dataType, data)
 	}
