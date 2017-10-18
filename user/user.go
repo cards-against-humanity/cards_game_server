@@ -15,6 +15,11 @@ type User struct {
 	email    string
 }
 
+// GetID .
+func (u User) GetID() int {
+	return u.id
+}
+
 // GetByID .
 func GetByID(id int, db *sql.DB) (User, error) {
 	rows, err := db.Query("SELECT googleId, name, email FROM users WHERE id = " + strconv.Itoa(id))
