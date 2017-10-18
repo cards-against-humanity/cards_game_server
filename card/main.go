@@ -37,9 +37,9 @@ func GetCards(cpids []int, db *sql.DB) ([]BlackCard, []WhiteCard) {
 		}
 
 		if ctype == "black" {
-			bc = append(bc, BlackCard{id: id, text: text, answerFields: int(answerFields.Int64), createdAt: intsToTime(createdAt), updatedAt: intsToTime(updatedAt), cardpackID: cardpackID})
+			bc = append(bc, CreateBlackCard(id, text, int(answerFields.Int64), intsToTime(createdAt), intsToTime(updatedAt), cardpackID))
 		} else {
-			wc = append(wc, WhiteCard{id: id, text: text, createdAt: intsToTime(createdAt), updatedAt: intsToTime(updatedAt), cardpackID: cardpackID})
+			wc = append(wc, CreateWhiteCard(id, text, intsToTime(createdAt), intsToTime(updatedAt), cardpackID))
 		}
 	}
 	return bc, wc
