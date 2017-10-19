@@ -51,24 +51,24 @@ func (h Handler) Remove(s *socketio.Socket) {
 }
 
 // SendActionToUser sends data to all sockets belonging to a particular user
-func (h Handler) SendActionToUser(userID int, dataType string, action Action) {
+func (h Handler) SendActionToUser(userID int, action Action) {
 	if _, ok := h.uToS[userID]; ok {
 		for _, s := range h.uToS[userID] {
-			s.Emit(dataType, action)
+			s.Emit("action", action)
 		}
 	}
 }
 
 // SendActionToUsers sends data to all sockets belonging to a list of users
-func (h Handler) SendActionToUsers(userIDs []int, dataType string, action Action) {
+func (h Handler) SendActionToUsers(userIDs []int, action Action) {
 	for _, id := range userIDs {
-		h.SendActionToUser(id, dataType, action)
+		h.SendActionToUser(id, action)
 	}
 }
 
 // SendActionToAllUsers sends data to all sockets
-func (h Handler) SendActionToAllUsers(dataType string, data interface{}) {
+func (h Handler) SendActionToAllUsers(action Action) {
 	for s := range h.sToU {
-		s.Emit(dataType, data)
+		s.Emit("action", action)
 	}
 }
