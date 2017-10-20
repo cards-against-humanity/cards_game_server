@@ -28,18 +28,18 @@ func (gl GameList) CreateGame(u user.User, name string, maxPlayers int, bc []car
 	game := game.CreateGame(name, maxPlayers, wc, bc)
 	game.Join(u)
 	gl.gamesByName[name] = game
-	gl.gamesByUserID[u.GetID()] = game
+	gl.gamesByUserID[u.ID] = game
 	return nil
 }
 
 // GetStateForUser returns a game state from the perspective of a particular user
 func (gl GameList) GetStateForUser(u user.User) game.UserState {
-	userGame, exists := gl.gamesByUserID[u.GetID()]
+	userGame, exists := gl.gamesByUserID[u.ID]
 	if !exists {
 		// TODO - Properly configure blank game state
 		return game.UserState{}
 	}
-	return userGame.GetState(u.GetID())
+	return userGame.GetState(u.ID)
 }
 
 // JoinGame adds a user to a particular game
@@ -53,7 +53,7 @@ func (gl GameList) JoinGame(u user.User, gn string) error {
 	}
 	gl.LeaveGame(u)
 	game.Join(u)
-	gl.gamesByUserID[u.GetID()] = game
+	gl.gamesByUserID[u.ID] = game
 	return nil
 }
 
@@ -62,9 +62,9 @@ func (gl GameList) LeaveGame(u user.User) {
 	// TODO - Look at this method and finish implementing it
 	// TODO - Pause game if player count drops below a certain threshold
 	// TODO - If user was the owner/judge, reassign
-	if game, inGame := gl.gamesByUserID[u.GetID()]; inGame {
-		game.Leave(u.GetID())
-		delete(gl.gamesByUserID, u.GetID())
+	if game, inGame := gl.gamesByUserID[u.ID]; inGame {
+		game.Leave(u.ID)
+		delete(gl.gamesByUserID, u.ID)
 		if len(game.Players) == 0 {
 			delete(gl.gamesByName, game.Name)
 		}

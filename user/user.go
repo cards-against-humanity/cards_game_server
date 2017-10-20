@@ -9,41 +9,33 @@ import (
 
 // User .
 type User struct {
-	id       int
-	googleID string
-	name     string
-	email    string
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
-// GetID .
-func (u User) GetID() int {
-	return u.id
-}
-
-// GetByID .
+// GetByID fetches a user from the database with a given ID
 func GetByID(id int, db *sql.DB) (User, error) {
-	rows, err := db.Query("SELECT googleId, name, email FROM users WHERE id = " + strconv.Itoa(id))
+	rows, err := db.Query("SELECT name, email FROM users WHERE id = " + strconv.Itoa(id))
 	if err != nil {
 		return User{}, err
 	}
-	var googleID string
 	var name string
 	var email string
 	rows.Next()
-	if err := rows.Scan(&googleID, &name, &email); err != nil {
+	if err := rows.Scan(&name, &email); err != nil {
 		log.Fatal(err)
 	}
-	return User{id: id, googleID: googleID, name: name, email: email}, nil
+	return User{ID: id, Name: name, Email: email}, nil
 }
 
-// GetByCookie .
+// GetByCookie fetches a user from the database associated with a given cookie
 func GetByCookie(c string, db *sql.DB) (User, error) {
-	uid := GetIDByCookie(c, db)
+	uid := getIDByCookie(c, db)
 	return GetByID(uid, db)
 }
 
-// GetIDByCookie fetches the user ID associated with a cookie from database
-func GetIDByCookie(c string, db *sql.DB) int {
+func getIDByCookie(c string, db *sql.DB) int {
 	if len(c) > 32 {
 		c = c[4:36]
 	}
