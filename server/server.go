@@ -39,8 +39,14 @@ func StartHTTP(db *sql.DB) {
 
 func initSocket(so *socketio.Socket, db *sql.DB, sh *socket.Handler, games *gamelist.GameList) {
 	fmt.Println("A user has connected")
-	cookie, _ := (*so).Request().Cookie("connect.sid")
-	u, _ := user.GetByCookie(cookie.Value, db)
+	cookie, e := (*so).Request().Cookie("connect.sid")
+	if e != nil {
+		return;
+	}
+	u, e := user.GetByCookie(cookie.Value, db)
+	if e != nil {
+		return;
+	}
 	sh.Add(u.ID, so)
 	(*so).On("disconnection", func() {
 		fmt.Println("A user has disconnected")
