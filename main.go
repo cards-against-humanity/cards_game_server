@@ -7,11 +7,11 @@ import (
 
 	"./server"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 func main() {
-	db, err := sql.Open("mysql", "student:student@tcp(127.0.0.1)/cards")
+	db, err := sql.Open("postgres", "student:student@tcp(127.0.0.1)/cards")
 	if err != nil {
 		fmt.Println("Error connecting to database:", err)
 		os.Exit(11)
