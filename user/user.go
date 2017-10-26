@@ -1,7 +1,9 @@
 package user
 
 import (
+	"fmt"
 	"database/sql"
+	"errors"
 	"log"
 	"strconv"
 	"strings"
@@ -31,22 +33,26 @@ func GetByID(id int, db *sql.DB) (User, error) {
 
 // GetByCookie fetches a user from the database associated with a given cookie
 func GetByCookie(c string, db *sql.DB) (User, error) {
-	uid := getIDByCookie(c, db)
+	uid, e := getIDByCookie(c, db)
+	if e != nil {
+		return User{}, e
+	}
 	return GetByID(uid, db)
 }
 
-func getIDByCookie(c string, db *sql.DB) int {
+func getIDByCookie(c string, db *sql.DB) (int, error) {
 	if len(c) > 32 {
 		c = c[4:36]
 	}
-	rows, err := db.Query(`SELECT data FROM sessions WHERE sid = "` + c + `"`)
+	rows, err := db.Query(`SELECT data FROM "Sessions" WHERE sid = '` + c + `'`)
 	if err != nil {
-		return -1
+		fmt.Println(err)
+		return -1, errors.New("Cookie is not valid")
 	}
 	var data string
 	rows.Next()
 	rows.Scan(&data)
-	return parseUserID(data)
+	return parseUserID(data), nil
 }
 
 func parseUserID(data string) int {
