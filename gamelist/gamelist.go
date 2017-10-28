@@ -77,7 +77,7 @@ func (gl GameList) KickUser(owner user.User, u user.User) {
 }
 
 // PlayCard .
-func (gl GameList) PlayCard(u user.User, c card.WhiteCard) {
+func (gl GameList) PlayCard(u user.User, cID int) {
 	// TODO - Implement this method
 }
 

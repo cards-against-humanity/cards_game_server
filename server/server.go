@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/googollee/go-socket.io"
 	"github.com/rs/cors"
 
+	"../card"
 	"../gamelist"
 	"../user"
 	"./socket"
@@ -86,19 +88,41 @@ func initSocket(so *socketio.Socket, db *sql.DB, sh *socket.Handler, games *game
 	})
 }
 
+// GameCreateMessage JSON structure for HTTP requests to the game creation endpoint
+type GameCreateMessage struct {
+	Name        string `json:"name"`
+	CardpackIDs []int  `json:"cardpackIDs"`
+}
+
 func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.GameList) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(path+"/state", func(w http.ResponseWriter, r *http.Request) {
-		cookie, e := r.Cookie("connect.sid")
+		u, e := user.GetByRequest(r, db)
 		if e != nil {
-			http.Error(w, "Not logged in", 500)
+			http.Error(w, e.Error(), 500)
 			return
 		}
-		u, e := user.GetByCookie(cookie.Value, db)
+		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
+	})
+	mux.HandleFunc(path+"/create", func(w http.ResponseWriter, r *http.Request) {
+		u, e := user.GetByRequest(r, db)
 		if e != nil {
-			http.Error(w, "Not logged in", 500)
+			http.Error(w, e.Error(), 500)
 			return
 		}
+
+		b, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		var msg GameCreateMessage
+		err = json.Unmarshal(b, &msg)
+		fmt.Println(msg.Name)
+		fmt.Println(msg.CardpackIDs)
+		bc, wc := card.GetCards(msg.CardpackIDs, db)
+		gl.CreateGame(u, msg.Name, 8, bc, wc)
 		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
 	return mux
