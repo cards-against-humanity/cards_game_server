@@ -118,8 +118,7 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 		}
 		var msg GameCreateMessage
 		err = json.Unmarshal(b, &msg)
-		fmt.Println(msg.Name)
-		fmt.Println(msg.CardpackIDs)
+
 		bc, wc := card.GetCards(msg.CardpackIDs, db)
 		gl.CreateGame(u, msg.Name, 8, bc, wc)
 		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
@@ -143,16 +142,88 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 			http.Error(w, err.Error(), 500)
 			return
 		}
+
 		gl.JoinGame(u, msg)
 		json.NewEncoder(w).Encode(true)
 	})
 	mux.HandleFunc(path+"/leave", func(w http.ResponseWriter, r *http.Request) {
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		gl.LeaveGame(u)
+		json.NewEncoder(w).Encode(true)
 	})
 	mux.HandleFunc(path+"/card", func(w http.ResponseWriter, r *http.Request) {
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		var msg int
+		err = json.Unmarshal(b, &msg)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		gl.PlayCard(u, msg)
+		json.NewEncoder(w).Encode(true)
 	})
 	mux.HandleFunc(path+"/kickplayer", func(w http.ResponseWriter, r *http.Request) {
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		var msg int
+		err = json.Unmarshal(b, &msg)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		gl.KickUser(u, msg)
+		json.NewEncoder(w).Encode(true)
 	})
 	mux.HandleFunc(path+"/vote", func(w http.ResponseWriter, r *http.Request) {
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		var msg int
+		err = json.Unmarshal(b, &msg)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		gl.VotePlayer(u, msg)
+		json.NewEncoder(w).Encode(true)
 	})
 	return mux
 }

@@ -72,7 +72,7 @@ func (gl GameList) LeaveGame(u user.User) {
 }
 
 // KickUser kicks a user from the game if the kicker is the game owner
-func (gl GameList) KickUser(owner user.User, u user.User) {
+func (gl GameList) KickUser(owner user.User, uID int) {
 	// TODO - Implement this method
 }
 
@@ -82,6 +82,6 @@ func (gl GameList) PlayCard(u user.User, cID int) {
 }
 
 // VotePlayer allows user to pick a favorite card
-func (gl GameList) VotePlayer(judge user.User, u user.User) {
+func (gl GameList) VotePlayer(judge user.User, uID int) {
 	// TODO - Implement this method
 }
