@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 )
@@ -29,6 +30,15 @@ func GetByID(id int, db *sql.DB) (User, error) {
 		log.Fatal(err)
 	}
 	return User{ID: id, Name: name, Email: email}, nil
+}
+
+// GetByRequest gets the user that sent the HTTP request
+func GetByRequest(r *http.Request, db *sql.DB) (User, error) {
+	cookie, e := r.Cookie("connect.sid")
+	if e != nil {
+		return User{}, e
+	}
+	return GetByCookie(cookie.Value, db)
 }
 
 // GetByCookie fetches a user from the database associated with a given cookie
