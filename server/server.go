@@ -231,6 +231,7 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 func createGameListMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.GameList) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(gl.GetList())
 	})
 	return mux
 }

@@ -85,3 +85,9 @@ func (gl GameList) PlayCard(u user.User, cID int) {
 func (gl GameList) VotePlayer(judge user.User, uID int) {
 	// TODO - Implement this method
 }
+
+// GetList fetches a list of all current games
+func (gl GameList) GetList() []game.GenericState {
+	return nil
+	// TODO - Implement this method
+}
