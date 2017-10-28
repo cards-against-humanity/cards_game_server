@@ -1,9 +1,9 @@
 package user
 
 import (
-	"fmt"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -56,9 +56,9 @@ func getIDByCookie(c string, db *sql.DB) (int, error) {
 }
 
 func parseUserID(data string) int {
-	data = strings.Split(data, `"passport":`)[1]
+	split := strings.Split(data, `}`)
+	data = split[len(split)-3]
 	data = strings.Split(data, `"user":`)[1]
-	data = strings.Split(data, `}`)[0]
 	i, _ := strconv.ParseInt(data, 10, 64)
 	return int(i)
 }
