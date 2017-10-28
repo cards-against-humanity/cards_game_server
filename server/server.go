@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -43,12 +42,12 @@ func StartHTTP(db *sql.DB) {
 }
 
 func initSocket(so *socketio.Socket, db *sql.DB, sh *socket.Handler, games *gamelist.GameList) {
-	cookie, e := (*so).Request().Cookie("connect.sid")
-	if e != nil {
+	cookie, err := (*so).Request().Cookie("connect.sid")
+	if err != nil {
 		return
 	}
-	u, e := user.GetByCookie(cookie.Value, db)
-	if e != nil {
+	u, err := user.GetByCookie(cookie.Value, db)
+	if err != nil {
 		return
 	}
 	fmt.Println("A user has connected")
@@ -97,17 +96,17 @@ type GameCreateMessage struct {
 func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.GameList) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(path+"/state", func(w http.ResponseWriter, r *http.Request) {
-		u, e := user.GetByRequest(r, db)
-		if e != nil {
-			http.Error(w, e.Error(), 500)
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
 			return
 		}
 		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
 	mux.HandleFunc(path+"/create", func(w http.ResponseWriter, r *http.Request) {
-		u, e := user.GetByRequest(r, db)
-		if e != nil {
-			http.Error(w, e.Error(), 500)
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
 			return
 		}
 
@@ -125,18 +124,42 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 		gl.CreateGame(u, msg.Name, 8, bc, wc)
 		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
+	mux.HandleFunc(path+"/join", func(w http.ResponseWriter, r *http.Request) {
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		var msg string
+		err = json.Unmarshal(b, &msg)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		gl.JoinGame(u, msg)
+		json.NewEncoder(w).Encode(true)
+	})
+	mux.HandleFunc(path+"/leave", func(w http.ResponseWriter, r *http.Request) {
+	})
+	mux.HandleFunc(path+"/card", func(w http.ResponseWriter, r *http.Request) {
+	})
+	mux.HandleFunc(path+"/kickplayer", func(w http.ResponseWriter, r *http.Request) {
+	})
+	mux.HandleFunc(path+"/vote", func(w http.ResponseWriter, r *http.Request) {
+	})
 	return mux
 }
 
 func createGameListMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.GameList) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc(path+"/testt", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Method Type: " + r.Method)
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	})
-	mux.HandleFunc(path+"/test", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Method Type: " + r.Method)
-		fmt.Fprintf(w, "Hello there, %s", r.Method)
+	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 	})
 	return mux
 }
