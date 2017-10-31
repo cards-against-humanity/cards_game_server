@@ -7,8 +7,9 @@ import (
 
 // Player a user that also contains other game-specific player data
 type Player struct {
-	user.User `json:"user"`
-	Score     int `json:"score"`
+	User      user.User `json:"user"`
+	Score     int       `json:"score"`
+	HasPlayed bool      `json:"hasPlayed"`
 }
 
 type player struct {
