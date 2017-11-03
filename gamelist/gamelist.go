@@ -25,7 +25,10 @@ func (gl GameList) CreateGame(u user.User, name string, maxPlayers int, bc []car
 		return errors.New("Game name is taken")
 	}
 	gl.LeaveGame(u)
-	game := game.CreateGame(name, maxPlayers, wc, bc)
+	game, err := game.CreateGame(name, maxPlayers, wc, bc)
+	if err != nil {
+		return err
+	}
 	game.Join(u)
 	gl.gamesByName[name] = game
 	gl.gamesByUserID[u.ID] = game
