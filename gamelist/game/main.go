@@ -75,7 +75,7 @@ func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackC
 }
 
 // GetState returns the game state for a particular user (will return generic game state if user is not in the game)
-func (g Game) GetState(pID int) UserState {
+func (g *Game) GetState(pID int) UserState {
 	player, _ := g.getPrivatePlayer(pID)
 	knownCards := make(map[int][]card.WhiteCard)
 	unknownCards := [][]card.WhiteCard{}
@@ -108,22 +108,24 @@ func (g Game) GetState(pID int) UserState {
 }
 
 // Join .
-func (g Game) Join(u user.User) {
-	// Check UserID
+func (g *Game) Join(u user.User) {
+	if !g.playerIsInGame(u.ID) {
+		g.Players = append(g.Players, player{user: u, hand: []card.WhiteCard{}, score: 0})
+	}
 	// TODO - Assign owner if first player
 }
 
 // Leave .
-func (g Game) Leave(pID int) {
+func (g *Game) Leave(pID int) {
 }
 
 // PlayCard .
-func (g Game) PlayCard(pID int, cid int) error {
+func (g *Game) PlayCard(pID int, cid int) error {
 	return nil
 }
 
 // GetGenericState returns a simple generic state for a game
-func (g Game) GetGenericState() GenericState {
+func (g *Game) GetGenericState() GenericState {
 	owner, _ := g.getPrivatePlayer(g.ownerID)
 	return GenericState{
 		Name:  g.Name,
@@ -167,4 +169,13 @@ func (g Game) getPublicPlayers() []Player {
 		pl = append(pl, g.getPublicPlayerFromPrivate(p))
 	}
 	return pl
+}
+
+func (g Game) playerIsInGame(pID int) bool {
+	for _, p := range g.Players {
+		if p.user.ID == pID {
+			return true
+		}
+	}
+	return false
 }

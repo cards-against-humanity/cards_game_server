@@ -20,7 +20,7 @@ func CreateGameList() GameList {
 }
 
 // CreateGame creates a new game with the given name and cards
-func (gl GameList) CreateGame(u user.User, name string, maxPlayers int, bc []card.BlackCard, wc []card.WhiteCard) error {
+func (gl *GameList) CreateGame(u user.User, name string, maxPlayers int, bc []card.BlackCard, wc []card.WhiteCard) error {
 	if _, exists := gl.gamesByName[name]; exists {
 		return errors.New("Game name is taken")
 	}
@@ -36,7 +36,7 @@ func (gl GameList) CreateGame(u user.User, name string, maxPlayers int, bc []car
 }
 
 // GetStateForUser returns a game state from the perspective of a particular user
-func (gl GameList) GetStateForUser(u user.User) game.UserState {
+func (gl *GameList) GetStateForUser(u user.User) game.UserState {
 	userGame, exists := gl.gamesByUserID[u.ID]
 	if !exists {
 		// TODO - Properly configure blank game state
@@ -46,7 +46,7 @@ func (gl GameList) GetStateForUser(u user.User) game.UserState {
 }
 
 // JoinGame adds a user to a particular game
-func (gl GameList) JoinGame(u user.User, gn string) error {
+func (gl *GameList) JoinGame(u user.User, gn string) error {
 	game, exists := gl.gamesByName[gn]
 	if !exists {
 		return errors.New("Game does not exist")
@@ -61,7 +61,7 @@ func (gl GameList) JoinGame(u user.User, gn string) error {
 }
 
 // LeaveGame removes a user from a particular game
-func (gl GameList) LeaveGame(u user.User) {
+func (gl *GameList) LeaveGame(u user.User) {
 	// TODO - Look at this method and finish implementing it
 	// TODO - Pause game if player count drops below a certain threshold
 	// TODO - If user was the owner/judge, reassign
@@ -75,22 +75,22 @@ func (gl GameList) LeaveGame(u user.User) {
 }
 
 // KickUser kicks a user from the game if the kicker is the game owner
-func (gl GameList) KickUser(owner user.User, uID int) {
+func (gl *GameList) KickUser(owner user.User, uID int) {
 	// TODO - Implement this method
 }
 
 // PlayCard .
-func (gl GameList) PlayCard(u user.User, cID int) {
+func (gl *GameList) PlayCard(u user.User, cID int) {
 	// TODO - Implement this method
 }
 
 // VotePlayer allows user to pick a favorite card
-func (gl GameList) VotePlayer(judge user.User, uID int) {
+func (gl *GameList) VotePlayer(judge user.User, uID int) {
 	// TODO - Implement this method
 }
 
 // GetList fetches a list of all current games
-func (gl GameList) GetList() []game.GenericState {
+func (gl *GameList) GetList() []game.GenericState {
 	return nil
 	// TODO - Implement this method
 }
