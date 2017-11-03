@@ -111,17 +111,29 @@ func (g *Game) GetState(pID int) UserState {
 func (g *Game) Join(u user.User) {
 	if !g.playerIsInGame(u.ID) {
 		g.Players = append(g.Players, player{user: u, hand: []card.WhiteCard{}, score: 0})
+		if len(g.Players) == 1 {
+			g.ownerID = u.ID
+		}
 	}
-	// TODO - Assign owner if first player
 }
 
 // Leave .
 func (g *Game) Leave(pID int) {
+	// TODO - Pause game if player count drops below a certain threshold
+	// TODO - If user was the owner/judge, reassign
+}
+
+// KickUser allows the game owner to boot users from the game
+func (g *Game) KickUser(ownerID int, userID int) {
 }
 
 // PlayCard .
-func (g *Game) PlayCard(pID int, cid int) error {
+func (g *Game) PlayCard(pID int, cID int) error {
 	return nil
+}
+
+// VoteCard allows the game judge to pick their favorite card
+func (g *Game) VoteCard(judgeID int, cardID int) {
 }
 
 // GetGenericState returns a simple generic state for a game

@@ -62,9 +62,6 @@ func (gl *GameList) JoinGame(u user.User, gn string) error {
 
 // LeaveGame removes a user from a particular game
 func (gl *GameList) LeaveGame(u user.User) {
-	// TODO - Look at this method and finish implementing it
-	// TODO - Pause game if player count drops below a certain threshold
-	// TODO - If user was the owner/judge, reassign
 	if game, inGame := gl.gamesByUserID[u.ID]; inGame {
 		game.Leave(u.ID)
 		delete(gl.gamesByUserID, u.ID)
@@ -76,21 +73,30 @@ func (gl *GameList) LeaveGame(u user.User) {
 
 // KickUser kicks a user from the game if the kicker is the game owner
 func (gl *GameList) KickUser(owner user.User, uID int) {
-	// TODO - Implement this method
+	if game, inGame := gl.gamesByUserID[owner.ID]; inGame {
+		game.KickUser(owner.ID, uID)
+	}
 }
 
-// PlayCard .
+// PlayCard allows user to play a card if they are not the judge
 func (gl *GameList) PlayCard(u user.User, cID int) {
-	// TODO - Implement this method
+	if game, inGame := gl.gamesByUserID[u.ID]; inGame {
+		game.PlayCard(u.ID, cID)
+	}
 }
 
-// VotePlayer allows user to pick a favorite card
-func (gl *GameList) VotePlayer(judge user.User, uID int) {
-	// TODO - Implement this method
+// VoteCard allows user to pick a favorite card
+func (gl *GameList) VoteCard(judge user.User, cID int) {
+	if game, inGame := gl.gamesByUserID[judge.ID]; inGame {
+		game.VoteCard(judge.ID, cID)
+	}
 }
 
 // GetList fetches a list of all current games
 func (gl *GameList) GetList() []game.GenericState {
-	return nil
-	// TODO - Implement this method
+	list := []game.GenericState{}
+	for _, game := range gl.gamesByName {
+		list = append(list, game.GetGenericState())
+	}
+	return list
 }

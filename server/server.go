@@ -230,7 +230,7 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 			return
 		}
 
-		gl.VotePlayer(u, msg)
+		gl.VoteCard(u, msg)
 		json.NewEncoder(w).Encode(true)
 	})
 	return mux
