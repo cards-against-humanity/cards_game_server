@@ -125,10 +125,19 @@ func (g *Game) Join(u user.User) {
 func (g *Game) Leave(pID int) {
 	// TODO - Pause game if player count drops below a certain threshold
 	// TODO - If user was the owner/judge, reassign
+	for i, p := range g.Players {
+		if p.user.ID == pID {
+			g.Players = append(g.Players[:i], g.Players[i+1:]...)
+			break
+		}
+	}
 }
 
 // KickUser allows the game owner to boot users from the game
 func (g *Game) KickUser(ownerID int, userID int) {
+	if ownerID == g.ownerID && ownerID != userID {
+		g.Leave(userID)
+	}
 }
 
 // PlayCard .
