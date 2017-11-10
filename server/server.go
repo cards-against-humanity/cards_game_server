@@ -36,7 +36,7 @@ func StartHTTP(db *sql.DB) {
 	})
 	http.Handle("/socket.io/", c.Handler(socketIOMux))
 	http.Handle("/game/", c.Handler(createGameMux("/game", db, &sh, &games)))
-	http.Handle("/gamelist/", c.Handler(createGameListMux("/gamelist", db, &sh, &games)))
+	http.Handle("/gamelist", c.Handler(createGameListMux("/gamelist", db, &sh, &games)))
 	fmt.Println("Starting HTTP/Socket server...")
 	http.ListenAndServe(":8000", nil)
 }
