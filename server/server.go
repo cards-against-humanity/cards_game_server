@@ -91,6 +91,7 @@ func initSocket(so *socketio.Socket, db *sql.DB, sh *socket.Handler, games *game
 type GameCreateMessage struct {
 	Name        string `json:"name"`
 	CardpackIDs []int  `json:"cardpackIDs"`
+	MaxPlayers  int    `json:"maxPlayers"`
 }
 
 func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.GameList) http.Handler {
@@ -124,7 +125,7 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 		}
 
 		bc, wc := card.GetCards(msg.CardpackIDs, db)
-		err = gl.CreateGame(u, msg.Name, 8, bc, wc)
+		err = gl.CreateGame(u, msg.Name, msg.MaxPlayers, bc, wc)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -162,7 +163,7 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 		}
 
 		gl.LeaveGame(u)
-		json.NewEncoder(w).Encode(true)
+		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
 	mux.HandleFunc(path+"/card", func(w http.ResponseWriter, r *http.Request) {
 		u, err := user.GetByRequest(r, db)

@@ -36,13 +36,13 @@ func (gl *GameList) CreateGame(u user.User, name string, maxPlayers int, bc []ca
 }
 
 // GetStateForUser returns a game state from the perspective of a particular user
-func (gl *GameList) GetStateForUser(u user.User) game.UserState {
+func (gl *GameList) GetStateForUser(u user.User) *game.UserState {
 	userGame, exists := gl.gamesByUserID[u.ID]
 	if !exists {
-		// TODO - Properly configure blank game state
-		return game.UserState{}
+		return nil
 	}
-	return userGame.GetState(u.ID)
+	state := userGame.GetState(u.ID)
+	return &state
 }
 
 // JoinGame adds a user to a particular game

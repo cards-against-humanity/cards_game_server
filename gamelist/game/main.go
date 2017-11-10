@@ -35,13 +35,13 @@ type Game struct {
 // UserState - The state of a game for a particular user
 type UserState struct {
 	Name              string                   `json:"name"`
-	BlackCard         card.BlackCard           `json:"blackCard,omitempty"`
+	BlackCard         *card.BlackCard          `json:"blackCard"`
 	WhiteCardsUnknown [][]card.WhiteCard       `json:"whiteCardsUnknown,omitempty"`
 	WhiteCardsKnown   map[int][]card.WhiteCard `json:"whiteCardsKnown,omitempty"`
 	JudgeID           int                      `json:"judgeId,omitempty"`
 	OwnerID           int                      `json:"ownerId"`
 	Players           []Player                 `json:"players"`
-	Hand              []card.WhiteCard         `json:"hand,omitempty"`
+	Hand              []card.WhiteCard         `json:"hand"`
 	CurrentStage      int                      `json:"currentStage,omitempty"`
 	NextStage         time.Time                `json:"nextStage,omitempty"`
 }
@@ -93,9 +93,13 @@ func (g *Game) GetState(pID int) UserState {
 		}
 	}
 
+	var blackCard *card.BlackCard
+	if g.BlackCurrent.ID > 0 {
+		blackCard = &g.BlackCurrent
+	}
 	return UserState{
 		Name:              g.Name,
-		BlackCard:         g.BlackCurrent,
+		BlackCard:         blackCard,
 		WhiteCardsUnknown: unknownCards,
 		WhiteCardsKnown:   knownCards,
 		JudgeID:           g.judgeID,
