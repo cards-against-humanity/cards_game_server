@@ -132,6 +132,16 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 		}
 		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
+	mux.HandleFunc(path+"/start", func(w http.ResponseWriter, r *http.Request) {
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		gl.StartGame(u.ID)
+		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
+	})
 	mux.HandleFunc(path+"/join", func(w http.ResponseWriter, r *http.Request) {
 		u, err := user.GetByRequest(r, db)
 		if err != nil {

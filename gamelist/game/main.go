@@ -111,6 +111,13 @@ func (g *Game) GetState(pID int) UserState {
 	}
 }
 
+// Start .
+func (g *Game) Start(uID int) {
+	if g.ownerID == uID {
+		// TODO - Kick off setInterval
+	}
+}
+
 // Join .
 func (g *Game) Join(u user.User) {
 	if !g.playerIsInGame(u.ID) {
