@@ -17,19 +17,21 @@ import (
 
 // Game - A cards game
 type Game struct {
-	Name         string
-	MaxPlayers   int
-	Players      []player
-	ownerID      int
-	judgeID      int
-	stage        int
-	nextStage    time.Time
-	whiteDraw    []card.WhiteCard
-	whiteDiscard []card.WhiteCard
-	whitePlayed  map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
-	BlackDraw    []card.BlackCard
-	BlackDiscard []card.BlackCard
-	BlackCurrent card.BlackCard
+	Name                string
+	MaxPlayers          int
+	Players             []player
+	ownerID             int
+	judgeID             int
+	stage               int
+	nextStage           *time.Time
+	stageChangeCallback func()
+	timer               *time.Timer
+	whiteDraw           []card.WhiteCard
+	whiteDiscard        []card.WhiteCard
+	whitePlayed         map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
+	BlackDraw           []card.BlackCard
+	BlackDiscard        []card.BlackCard
+	BlackCurrent        card.BlackCard
 }
 
 // UserState - The state of a game for a particular user
@@ -43,7 +45,7 @@ type UserState struct {
 	Players           []Player                 `json:"players"`
 	Hand              []card.WhiteCard         `json:"hand"`
 	CurrentStage      int                      `json:"currentStage,omitempty"`
-	NextStage         time.Time                `json:"nextStage,omitempty"`
+	NextStage         *time.Time               `json:"nextStage"`
 }
 
 // GenericState - The state of a game for a user that is not in the game
@@ -53,7 +55,7 @@ type GenericState struct {
 }
 
 // CreateGame .
-func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard) (Game, error) {
+func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, stageChangeCallback func()) (Game, error) {
 	if len(name) > 64 {
 		return Game{}, errors.New("Game name must not exceed 64 characters")
 	}
@@ -71,7 +73,7 @@ func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackC
 	if maxPlayers > 20 {
 		return Game{}, errors.New("Max players must not exceed 20")
 	}
-	return Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0}, nil
+	return Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0, stageChangeCallback: stageChangeCallback}, nil
 }
 
 // GetState returns the game state for a particular user (will return generic game state if user is not in the game)
@@ -112,10 +114,15 @@ func (g *Game) GetState(pID int) UserState {
 }
 
 // Start .
-func (g *Game) Start(uID int) {
-	if g.ownerID == uID {
-		// TODO - Kick off setInterval
+func (g *Game) Start(uID int) error {
+	if g.ownerID != uID {
+		return errors.New("Only the owner can start the game")
 	}
+	if g.timer != nil {
+		return errors.New("Game is already running")
+	}
+	g.next()
+	return nil
 }
 
 // Join .
@@ -130,13 +137,20 @@ func (g *Game) Join(u user.User) {
 
 // Leave .
 func (g *Game) Leave(pID int) {
-	// TODO - Pause game if player count drops below a certain threshold
-	// TODO - If user was the owner/judge, reassign
 	for i, p := range g.Players {
 		if p.user.ID == pID {
 			g.Players = append(g.Players[:i], g.Players[i+1:]...)
+			if pID == g.ownerID {
+				g.ownerID = g.Players[0].user.ID
+			}
+			if pID == g.judgeID {
+				// TODO - Properly reassign judge
+			}
 			break
 		}
+	}
+	if len(g.Players) < 4 {
+		g.stop()
 	}
 }
 
@@ -163,6 +177,14 @@ func (g *Game) GetGenericState() GenericState {
 		Name:  g.Name,
 		Owner: owner.user,
 	}
+}
+
+func (g *Game) stop() {}
+
+func (g *Game) next() {
+	g.timer = time.AfterFunc(time.Duration(5)*time.Second, func() {
+	})
+	g.stageChangeCallback()
 }
 
 ///////////////////////

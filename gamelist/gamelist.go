@@ -44,10 +44,15 @@ func (gl *GameList) CreateGame(u user.User, name string, maxPlayers int, bc []ca
 }
 
 // StartGame starts the game that the user is in (if they are the game owner)
-func (gl *GameList) StartGame(uID int) {
+func (gl *GameList) StartGame(uID int) error {
 	if userGame, exists := gl.gamesByUserID[uID]; exists {
-		userGame.Start(uID)
+		err := userGame.Start(uID)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
+	return errors.New("User is not in a game")
 }
 
 // GetStateForUser returns a game state from the perspective of a particular user
