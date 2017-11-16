@@ -115,7 +115,7 @@ func (g *Game) Start(uID int) error {
 	if g.ownerID != uID {
 		return errors.New("Only the owner can start the game")
 	}
-	if g.timer != nil {
+	if g.isRunning() {
 		return errors.New("Game is already running")
 	}
 	g.next()
@@ -183,7 +183,7 @@ func (g *Game) GetGenericState() GenericState {
 }
 
 func (g *Game) stop() {
-	if g.timer != nil {
+	if g.isRunning() {
 		g.timer.Stop()
 	}
 
