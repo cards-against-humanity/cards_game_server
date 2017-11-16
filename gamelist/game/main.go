@@ -32,7 +32,7 @@ type Game struct {
 	whitePlayed   map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
 	BlackDraw     []card.BlackCard
 	BlackDiscard  []card.BlackCard
-	BlackCurrent  card.BlackCard
+	BlackCurrent  *card.BlackCard
 }
 
 // UserState - The state of a game for a particular user
@@ -96,13 +96,9 @@ func (g *Game) GetState(pID int) UserState {
 		}
 	}
 
-	var blackCard *card.BlackCard
-	if g.BlackCurrent.ID > 0 {
-		blackCard = &g.BlackCurrent
-	}
 	return UserState{
 		Name:              g.Name,
-		BlackCard:         blackCard,
+		BlackCard:         g.BlackCurrent,
 		WhiteCardsUnknown: unknownCards,
 		WhiteCardsKnown:   knownCards,
 		JudgeID:           g.judgeID,
@@ -207,9 +203,11 @@ func (g *Game) stop() {
 	g.whitePlayed = make(map[int][]card.WhiteCard)
 
 	g.BlackDraw = append(g.BlackDraw, g.BlackDiscard...)
-	g.BlackDraw = append(g.BlackDraw, g.BlackCurrent)
 	g.BlackDiscard = []card.BlackCard{}
-	g.BlackCurrent = card.BlackCard{} // TODO - Change to nil and make blackcard a pointer
+	if g.BlackCurrent != nil {
+		g.BlackDraw = append(g.BlackDraw, *g.BlackCurrent)
+		g.BlackCurrent = nil
+	}
 }
 
 func (g *Game) next() {
@@ -244,6 +242,9 @@ func (g Game) getPublicPlayerFromPrivate(pPriv player) Player {
 
 // userHasPlayed returns whether a user has played the correct number of cards for this round
 func (g Game) userHasPlayed(pID int) bool {
+	if g.BlackCurrent == nil {
+		return false
+	}
 	return g.BlackCurrent.AnswerFields == len(g.whitePlayed[pID])
 }
 
