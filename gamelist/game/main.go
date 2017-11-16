@@ -141,16 +141,20 @@ func (g *Game) Leave(pID int) {
 		if p.user.ID == pID {
 			g.Players = append(g.Players[:i], g.Players[i+1:]...)
 			if pID == g.ownerID {
-				g.ownerID = g.Players[0].user.ID
+				if len(g.Players) == 0 {
+					g.ownerID = 0
+				} else {
+					g.ownerID = g.Players[0].user.ID
+				}
 			}
 			if pID == g.judgeID {
 				// TODO - Properly reassign judge
 			}
+			if len(g.Players) < 4 && g.isRunning() {
+				g.stop()
+			}
 			break
 		}
-	}
-	if len(g.Players) < 4 {
-		g.stop()
 	}
 }
 
@@ -179,7 +183,33 @@ func (g *Game) GetGenericState() GenericState {
 	}
 }
 
-func (g *Game) stop() {}
+func (g *Game) stop() {
+	if g.timer != nil {
+		g.timer.Stop()
+	}
+
+	for _, p := range g.Players {
+		g.whiteDraw = append(g.whiteDraw, p.hand...)
+		p.hand = []card.WhiteCard{}
+	}
+
+	g.judgeID = 0
+	g.stage = 0
+	g.nextStage = nil
+	g.timer = nil
+
+	g.whiteDraw = append(g.whiteDraw, g.whiteDiscard...)
+	g.whiteDiscard = []card.WhiteCard{}
+	for _, list := range g.whitePlayed {
+		g.whiteDraw = append(g.whiteDraw, list...)
+	}
+	g.whitePlayed = make(map[int][]card.WhiteCard)
+
+	g.BlackDraw = append(g.BlackDraw, g.BlackDiscard...)
+	g.BlackDraw = append(g.BlackDraw, g.BlackCurrent)
+	g.BlackDiscard = []card.BlackCard{}
+	g.BlackCurrent = card.BlackCard{} // TODO - Change to nil and make blackcard a pointer
+}
 
 func (g *Game) next() {
 	g.timer = time.AfterFunc(time.Duration(5)*time.Second, func() {
@@ -232,4 +262,8 @@ func (g Game) playerIsInGame(pID int) bool {
 		}
 	}
 	return false
+}
+
+func (g Game) isRunning() bool {
+	return g.stage != 0
 }
