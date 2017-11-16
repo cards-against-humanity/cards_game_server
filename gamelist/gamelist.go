@@ -53,6 +53,18 @@ func (gl *GameList) StartGame(uID int) error {
 	return errors.New("User is not in a game")
 }
 
+// StopGame starts the game that the user is in (if they are the game owner)
+func (gl *GameList) StopGame(uID int) error {
+	if userGame, exists := gl.gamesByUserID[uID]; exists {
+		err := userGame.Stop(uID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return errors.New("User is not in a game")
+}
+
 // GetStateForUser returns a game state from the perspective of a particular user
 func (gl *GameList) GetStateForUser(u user.User) *game.UserState {
 	userGame, exists := gl.gamesByUserID[u.ID]

@@ -122,6 +122,18 @@ func (g *Game) Start(uID int) error {
 	return nil
 }
 
+// Stop .
+func (g *Game) Stop(uID int) error {
+	if g.ownerID != uID {
+		return errors.New("Only the owner can stop the game")
+	}
+	if !g.isRunning() {
+		return errors.New("Game is not running")
+	}
+	g.stop()
+	return nil
+}
+
 // Join .
 func (g *Game) Join(u user.User) {
 	if !g.playerIsInGame(u.ID) {
