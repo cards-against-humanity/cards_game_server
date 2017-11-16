@@ -31,9 +31,7 @@ func (gl *GameList) CreateGame(u user.User, name string, maxPlayers int, bc []ca
 		return errors.New("Game name is taken")
 	}
 	gl.LeaveGame(u)
-	game, err := game.CreateGame(name, maxPlayers, wc, bc, func() {
-		// TODO - Implement this lambda
-	})
+	game, err := game.CreateGame(name, maxPlayers, wc, bc, gl.socketHandler)
 	if err != nil {
 		return err
 	}

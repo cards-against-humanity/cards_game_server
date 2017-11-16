@@ -12,26 +12,27 @@ import (
 	"time"
 
 	"../../card"
+	"../../server/socket"
 	"../../user"
 )
 
 // Game - A cards game
 type Game struct {
-	Name                string
-	MaxPlayers          int
-	Players             []player
-	ownerID             int
-	judgeID             int
-	stage               int
-	nextStage           *time.Time
-	stageChangeCallback func()
-	timer               *time.Timer
-	whiteDraw           []card.WhiteCard
-	whiteDiscard        []card.WhiteCard
-	whitePlayed         map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
-	BlackDraw           []card.BlackCard
-	BlackDiscard        []card.BlackCard
-	BlackCurrent        card.BlackCard
+	Name          string
+	MaxPlayers    int
+	Players       []player
+	ownerID       int
+	judgeID       int
+	stage         int
+	nextStage     *time.Time
+	socketHandler *socket.Handler
+	timer         *time.Timer
+	whiteDraw     []card.WhiteCard
+	whiteDiscard  []card.WhiteCard
+	whitePlayed   map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
+	BlackDraw     []card.BlackCard
+	BlackDiscard  []card.BlackCard
+	BlackCurrent  card.BlackCard
 }
 
 // UserState - The state of a game for a particular user
@@ -55,7 +56,7 @@ type GenericState struct {
 }
 
 // CreateGame .
-func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, stageChangeCallback func()) (Game, error) {
+func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, socketHandler *socket.Handler) (Game, error) {
 	if len(name) > 64 {
 		return Game{}, errors.New("Game name must not exceed 64 characters")
 	}
@@ -73,7 +74,7 @@ func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackC
 	if maxPlayers > 20 {
 		return Game{}, errors.New("Max players must not exceed 20")
 	}
-	return Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0, stageChangeCallback: stageChangeCallback}, nil
+	return Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0, socketHandler: socketHandler}, nil
 }
 
 // GetState returns the game state for a particular user (will return generic game state if user is not in the game)
@@ -214,7 +215,6 @@ func (g *Game) stop() {
 func (g *Game) next() {
 	g.timer = time.AfterFunc(time.Duration(5)*time.Second, func() {
 	})
-	g.stageChangeCallback()
 }
 
 ///////////////////////
