@@ -24,7 +24,7 @@ func StartHTTP(db *sql.DB) {
 		AllowCredentials: true,
 	})
 	sh := socket.CreateHandler()
-	games := gamelist.CreateGameList(&sh)
+	games := gamelist.CreateGameList(sh)
 
 	socketIOMux, err := socketio.NewServer(nil)
 	if err != nil {
@@ -32,11 +32,11 @@ func StartHTTP(db *sql.DB) {
 	}
 
 	socketIOMux.On("connection", func(s socketio.Socket) {
-		go initSocket(&s, db, &sh, &games)
+		go initSocket(&s, db, sh, &games)
 	})
 	http.Handle("/socket.io/", c.Handler(socketIOMux))
-	http.Handle("/game/", c.Handler(createGameMux("/game", db, &sh, &games)))
-	http.Handle("/gamelist", c.Handler(createGameListMux("/gamelist", db, &sh, &games)))
+	http.Handle("/game/", c.Handler(createGameMux("/game", db, sh, &games)))
+	http.Handle("/gamelist", c.Handler(createGameListMux("/gamelist", db, sh, &games)))
 	fmt.Println("Starting HTTP/Socket server...")
 	http.ListenAndServe(":8000", nil)
 }

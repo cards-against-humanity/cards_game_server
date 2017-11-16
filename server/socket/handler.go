@@ -17,8 +17,8 @@ type Action struct {
 }
 
 // CreateHandler generates a socket handler
-func CreateHandler() Handler {
-	return Handler{uToS: make(map[int][]socketio.Socket), sToU: make(map[socketio.Socket]int)}
+func CreateHandler() *Handler {
+	return &Handler{uToS: make(map[int][]socketio.Socket), sToU: make(map[socketio.Socket]int)}
 }
 
 // Add registers reference to a socket
