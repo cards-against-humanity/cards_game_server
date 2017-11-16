@@ -130,6 +130,7 @@ func (g *Game) Join(u user.User) {
 			g.ownerID = u.ID
 		}
 	}
+	g.updateUserStates()
 }
 
 // Leave .
@@ -153,6 +154,7 @@ func (g *Game) Leave(pID int) {
 			break
 		}
 	}
+	g.updateUserStates()
 }
 
 // KickUser allows the game owner to boot users from the game
@@ -208,11 +210,13 @@ func (g *Game) stop() {
 		g.BlackDraw = append(g.BlackDraw, *g.BlackCurrent)
 		g.BlackCurrent = nil
 	}
+	g.updateUserStates()
 }
 
 func (g *Game) next() {
 	g.timer = time.AfterFunc(time.Duration(5)*time.Second, func() {
 	})
+	g.updateUserStates()
 }
 
 ///////////////////////
@@ -267,4 +271,10 @@ func (g Game) playerIsInGame(pID int) bool {
 
 func (g Game) isRunning() bool {
 	return g.stage != 0
+}
+
+func (g *Game) updateUserStates() {
+	for _, u := range g.Players {
+		g.socketHandler.SendActionToUser(u.user.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: g.GetState(u.user.ID)})
+	}
 }
