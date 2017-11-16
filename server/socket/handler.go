@@ -36,8 +36,7 @@ func (h Handler) Remove(s *socketio.Socket) {
 	if userID, ok := h.sToU[*s]; ok {
 		for i, soc := range h.uToS[userID] {
 			if *s == soc {
-				h.uToS[userID][i] = h.uToS[userID][len(h.uToS)-1]
-				h.uToS[userID] = h.uToS[userID][:len(h.uToS)-1]
+				h.uToS[userID] = append(h.uToS[userID][:i], h.uToS[userID][i+1:]...)
 				break
 			}
 		}
