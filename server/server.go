@@ -160,15 +160,9 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		var msg string
-		err = json.Unmarshal(b, &msg)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
 
-		gl.JoinGame(u, msg)
-		json.NewEncoder(w).Encode(true)
+		gl.JoinGame(u, string(b))
+		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
 	mux.HandleFunc(path+"/leave", func(w http.ResponseWriter, r *http.Request) {
 		u, err := user.GetByRequest(r, db)
