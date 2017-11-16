@@ -12,26 +12,27 @@ import (
 	"time"
 
 	"../../card"
+	"../../server/socket"
 	"../../user"
 )
 
 // Game - A cards game
 type Game struct {
-	Name                string
-	MaxPlayers          int
-	Players             []player
-	ownerID             int
-	judgeID             int
-	stage               int
-	nextStage           *time.Time
-	stageChangeCallback func()
-	timer               *time.Timer
-	whiteDraw           []card.WhiteCard
-	whiteDiscard        []card.WhiteCard
-	whitePlayed         map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
-	BlackDraw           []card.BlackCard
-	BlackDiscard        []card.BlackCard
-	BlackCurrent        card.BlackCard
+	Name          string
+	MaxPlayers    int
+	Players       []player
+	ownerID       int
+	judgeID       int
+	stage         int
+	nextStage     *time.Time
+	socketHandler *socket.Handler
+	timer         *time.Timer
+	whiteDraw     []card.WhiteCard
+	whiteDiscard  []card.WhiteCard
+	whitePlayed   map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
+	BlackDraw     []card.BlackCard
+	BlackDiscard  []card.BlackCard
+	BlackCurrent  *card.BlackCard
 }
 
 // UserState - The state of a game for a particular user
@@ -55,7 +56,7 @@ type GenericState struct {
 }
 
 // CreateGame .
-func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, stageChangeCallback func()) (Game, error) {
+func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, socketHandler *socket.Handler) (Game, error) {
 	if len(name) > 64 {
 		return Game{}, errors.New("Game name must not exceed 64 characters")
 	}
@@ -73,7 +74,17 @@ func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackC
 	if maxPlayers > 20 {
 		return Game{}, errors.New("Max players must not exceed 20")
 	}
-	return Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0, stageChangeCallback: stageChangeCallback}, nil
+	return Game{
+		Name:          name,
+		MaxPlayers:    maxPlayers,
+		Players:       []player{},
+		socketHandler: socketHandler,
+		whiteDraw:     whiteCards,
+		whiteDiscard:  []card.WhiteCard{},
+		whitePlayed:   make(map[int][]card.WhiteCard),
+		BlackDraw:     blackCards,
+		BlackDiscard:  []card.BlackCard{},
+	}, nil
 }
 
 // GetState returns the game state for a particular user (will return generic game state if user is not in the game)
@@ -95,13 +106,9 @@ func (g *Game) GetState(pID int) UserState {
 		}
 	}
 
-	var blackCard *card.BlackCard
-	if g.BlackCurrent.ID > 0 {
-		blackCard = &g.BlackCurrent
-	}
 	return UserState{
 		Name:              g.Name,
-		BlackCard:         blackCard,
+		BlackCard:         g.BlackCurrent,
 		WhiteCardsUnknown: unknownCards,
 		WhiteCardsKnown:   knownCards,
 		JudgeID:           g.judgeID,
@@ -179,12 +186,39 @@ func (g *Game) GetGenericState() GenericState {
 	}
 }
 
-func (g *Game) stop() {}
+func (g *Game) stop() {
+	g.timer.Stop()
+
+	for _, p := range g.Players {
+		g.whiteDraw = append(g.whiteDraw, p.hand...)
+		p.hand = []card.WhiteCard{}
+	}
+
+	g.judgeID = 0
+	g.stage = 0
+	g.nextStage = nil
+	g.timer = nil
+
+	g.whiteDraw = append(g.whiteDraw, g.whiteDiscard...)
+	g.whiteDiscard = []card.WhiteCard{}
+	for _, list := range g.whitePlayed {
+		g.whiteDraw = append(g.whiteDraw, list...)
+	}
+	g.whitePlayed = make(map[int][]card.WhiteCard)
+
+	g.BlackDraw = append(g.BlackDraw, g.BlackDiscard...)
+	g.BlackDraw = append(g.BlackDraw, *g.BlackCurrent)
+	g.BlackDiscard = []card.BlackCard{}
+	g.BlackCurrent = nil
+}
 
 func (g *Game) next() {
 	g.timer = time.AfterFunc(time.Duration(5)*time.Second, func() {
 	})
-	g.stageChangeCallback()
+	// Update the states of all users in the game
+	for _, u := range g.Players {
+		g.socketHandler.SendActionToUser(u.user.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: g.GetState(u.user.ID)})
+	}
 }
 
 ///////////////////////
