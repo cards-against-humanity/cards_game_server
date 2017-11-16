@@ -4,19 +4,25 @@ import (
 	"errors"
 
 	"../card"
+	"../server/socket"
 	"../user"
 	"./game"
 )
 
 // GameList a group of games where each game has a unique name
 type GameList struct {
+	socketHandler *socket.Handler
 	gamesByName   map[string]game.Game
 	gamesByUserID map[int]game.Game
 }
 
 // CreateGameList constructor, generates an empty game list
-func CreateGameList() GameList {
-	return GameList{gamesByName: make(map[string]game.Game), gamesByUserID: make(map[int]game.Game)}
+func CreateGameList(socketHandler *socket.Handler) GameList {
+	return GameList{
+		socketHandler: socketHandler,
+		gamesByName:   make(map[string]game.Game),
+		gamesByUserID: make(map[int]game.Game),
+	}
 }
 
 // CreateGame creates a new game with the given name and cards
@@ -25,7 +31,9 @@ func (gl *GameList) CreateGame(u user.User, name string, maxPlayers int, bc []ca
 		return errors.New("Game name is taken")
 	}
 	gl.LeaveGame(u)
-	game, err := game.CreateGame(name, maxPlayers, wc, bc)
+	game, err := game.CreateGame(name, maxPlayers, wc, bc, func() {
+		// TODO - Implement this lambda
+	})
 	if err != nil {
 		return err
 	}

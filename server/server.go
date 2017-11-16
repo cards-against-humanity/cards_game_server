@@ -24,7 +24,7 @@ func StartHTTP(db *sql.DB) {
 		AllowCredentials: true,
 	})
 	sh := socket.CreateHandler()
-	games := gamelist.CreateGameList()
+	games := gamelist.CreateGameList(&sh)
 
 	socketIOMux, err := socketio.NewServer(nil)
 	if err != nil {
