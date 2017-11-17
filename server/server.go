@@ -56,35 +56,7 @@ func initSocket(so *socketio.Socket, db *sql.DB, sh *socket.Handler, games *game
 		fmt.Println("A user has disconnected")
 		sh.Remove(so)
 	})
-	// Game Logic Events
-	(*so).On("refreshgame", func() {
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	(*so).On("refreshlist", func() {
-		// TODO - Change nil to actual game list
-		sh.SendActionToUser(u.ID, socket.Action{Type: "games/SET_GAMES", Payload: nil})
-	})
-	(*so).On("join", func(gn string) {
-		if games.JoinGame(u, gn) == nil {
-		}
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	(*so).On("leave", func() {
-		games.LeaveGame(u)
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/RESET_GAME_STATE", Payload: nil})
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	(*so).On("kickplayer", func() {
-		games.LeaveGame(u)
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/RESET_GAME_STATE", Payload: nil})
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	// TODO - Allow function to accept other input types without crashing the server
-	(*so).On("playcard", func(cID int) {
-		games.PlayCard(u, cID)
-	})
-	(*so).On("vote", func() {
-	})
+	sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
 }
 
 // GameCreateMessage JSON structure for HTTP requests to the game creation endpoint
