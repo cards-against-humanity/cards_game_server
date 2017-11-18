@@ -77,16 +77,22 @@ func (gl *GameList) GetStateForUser(u user.User) *game.UserState {
 
 // JoinGame adds a user to a particular game
 func (gl *GameList) JoinGame(u user.User, gn string) error {
-	game, exists := gl.gamesByName[gn]
-	if !exists {
+	oldGame, oldGameExists := gl.gamesByUserID[u.ID]
+	newGame, newGameExists := gl.gamesByName[gn]
+	if !newGameExists {
 		return errors.New("Game does not exist")
 	}
-	if len(game.Players) >= game.MaxPlayers {
+	if oldGame.Name == newGame.Name {
+		return errors.New("You are already in this game")
+	}
+	if len(newGame.Players) >= newGame.MaxPlayers {
 		return errors.New("Game is full")
 	}
-	gl.LeaveGame(u)
-	game.Join(u)
-	gl.gamesByUserID[u.ID] = game
+	if oldGameExists {
+		gl.LeaveGame(u)
+	}
+	newGame.Join(u)
+	gl.gamesByUserID[u.ID] = newGame
 	return nil
 }
 
