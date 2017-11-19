@@ -56,25 +56,26 @@ type GenericState struct {
 }
 
 // CreateGame .
-func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, socketHandler *socket.Handler) (Game, error) {
+func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, socketHandler *socket.Handler) (*Game, error) {
 	if len(name) > 64 {
-		return Game{}, errors.New("Game name must not exceed 64 characters")
+		return &Game{}, errors.New("Game name must not exceed 64 characters")
 	}
 	// TODO - Get min black card count from config file instead of hardcoding to 10
 	if len(blackCards) < 10 {
-		return Game{}, errors.New("Insufficient number of black cards")
+		return &Game{}, errors.New("Insufficient number of black cards")
 	}
 	// TODO - Get min white card count from config file instead of hardcoding
 	if len(whiteCards) < (maxPlayers * 10) {
-		return Game{}, errors.New("Insufficient number of white cards")
+		return &Game{}, errors.New("Insufficient number of white cards")
 	}
 	if maxPlayers < 3 {
-		return Game{}, errors.New("Max players must be at least 3")
+		return &Game{}, errors.New("Max players must be at least 3")
 	}
 	if maxPlayers > 20 {
-		return Game{}, errors.New("Max players must not exceed 20")
+		return &Game{}, errors.New("Max players must not exceed 20")
 	}
-	return Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0, socketHandler: socketHandler}, nil
+	game := Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0, socketHandler: socketHandler}
+	return &game, nil
 }
 
 // GetState returns the game state for a particular user (will return generic game state if user is not in the game)

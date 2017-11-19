@@ -12,16 +12,16 @@ import (
 // GameList a group of games where each game has a unique name
 type GameList struct {
 	socketHandler *socket.Handler
-	gamesByName   map[string]game.Game
-	gamesByUserID map[int]game.Game
+	gamesByName   map[string]*game.Game
+	gamesByUserID map[int]*game.Game
 }
 
 // CreateGameList constructor, generates an empty game list
 func CreateGameList(socketHandler *socket.Handler) GameList {
 	return GameList{
 		socketHandler: socketHandler,
-		gamesByName:   make(map[string]game.Game),
-		gamesByUserID: make(map[int]game.Game),
+		gamesByName:   make(map[string]*game.Game),
+		gamesByUserID: make(map[int]*game.Game),
 	}
 }
 
@@ -77,18 +77,18 @@ func (gl *GameList) GetStateForUser(u user.User) *game.UserState {
 
 // JoinGame adds a user to a particular game
 func (gl *GameList) JoinGame(u user.User, gn string) error {
-	oldGame, oldGameExists := gl.gamesByUserID[u.ID]
-	newGame, newGameExists := gl.gamesByName[gn]
-	if !newGameExists {
+	oldGame, _ := gl.gamesByUserID[u.ID]
+	newGame, _ := gl.gamesByName[gn]
+	if newGame == nil {
 		return errors.New("Game does not exist")
 	}
-	if oldGame.Name == newGame.Name {
+	if oldGame != nil && oldGame.Name == newGame.Name {
 		return errors.New("You are already in this game")
 	}
 	if len(newGame.Players) >= newGame.MaxPlayers {
 		return errors.New("Game is full")
 	}
-	if oldGameExists {
+	if oldGame == nil {
 		gl.LeaveGame(u)
 	}
 	newGame.Join(u)
