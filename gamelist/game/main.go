@@ -74,7 +74,13 @@ func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackC
 	if maxPlayers > 20 {
 		return &Game{}, errors.New("Max players must not exceed 20")
 	}
-	game := Game{Name: name, MaxPlayers: maxPlayers, Players: []player{}, stage: 0, socketHandler: socketHandler}
+	game := Game{
+		Name:          name,
+		MaxPlayers:    maxPlayers,
+		socketHandler: socketHandler,
+		whiteDraw:     whiteCards,
+		BlackDraw:     blackCards,
+	}
 	return &game, nil
 }
 
@@ -282,8 +288,8 @@ func (g Game) playerIsInGame(pID int) bool {
 	return false
 }
 
-func (g Game) isRunning() bool {
-	return g.stage != 0
+func (g *Game) isRunning() bool {
+	return g.timer != nil
 }
 
 func (g *Game) updateUserStates() {
