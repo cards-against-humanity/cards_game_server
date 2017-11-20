@@ -60,9 +60,11 @@ func getIDByCookie(c string, db *sql.DB) (int, error) {
 		return -1, errors.New("Cookie is not valid")
 	}
 	var data string
-	rows.Next()
-	rows.Scan(&data)
-	return parseUserID(data), nil
+	if rows.Next() {
+		rows.Scan(&data)
+		return parseUserID(data), nil
+	}
+	return -1, errors.New("Cookie is not valid")
 }
 
 func parseUserID(data string) int {

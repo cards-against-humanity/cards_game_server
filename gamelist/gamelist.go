@@ -12,16 +12,16 @@ import (
 // GameList a group of games where each game has a unique name
 type GameList struct {
 	socketHandler *socket.Handler
-	gamesByName   map[string]game.Game
-	gamesByUserID map[int]game.Game
+	gamesByName   map[string]*game.Game
+	gamesByUserID map[int]*game.Game
 }
 
 // CreateGameList constructor, generates an empty game list
 func CreateGameList(socketHandler *socket.Handler) GameList {
 	return GameList{
 		socketHandler: socketHandler,
-		gamesByName:   make(map[string]game.Game),
-		gamesByUserID: make(map[int]game.Game),
+		gamesByName:   make(map[string]*game.Game),
+		gamesByUserID: make(map[int]*game.Game),
 	}
 }
 
@@ -53,6 +53,18 @@ func (gl *GameList) StartGame(uID int) error {
 	return errors.New("User is not in a game")
 }
 
+// StopGame starts the game that the user is in (if they are the game owner)
+func (gl *GameList) StopGame(uID int) error {
+	if userGame, exists := gl.gamesByUserID[uID]; exists {
+		err := userGame.Stop(uID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return errors.New("User is not in a game")
+}
+
 // GetStateForUser returns a game state from the perspective of a particular user
 func (gl *GameList) GetStateForUser(u user.User) *game.UserState {
 	userGame, exists := gl.gamesByUserID[u.ID]
@@ -65,16 +77,22 @@ func (gl *GameList) GetStateForUser(u user.User) *game.UserState {
 
 // JoinGame adds a user to a particular game
 func (gl *GameList) JoinGame(u user.User, gn string) error {
-	game, exists := gl.gamesByName[gn]
-	if !exists {
+	oldGame, _ := gl.gamesByUserID[u.ID]
+	newGame, _ := gl.gamesByName[gn]
+	if newGame == nil {
 		return errors.New("Game does not exist")
 	}
-	if len(game.Players) >= game.MaxPlayers {
+	if oldGame != nil && oldGame.Name == newGame.Name {
+		return errors.New("You are already in this game")
+	}
+	if len(newGame.Players) >= newGame.MaxPlayers {
 		return errors.New("Game is full")
 	}
-	gl.LeaveGame(u)
-	game.Join(u)
-	gl.gamesByUserID[u.ID] = game
+	if oldGame == nil {
+		gl.LeaveGame(u)
+	}
+	newGame.Join(u)
+	gl.gamesByUserID[u.ID] = newGame
 	return nil
 }
 

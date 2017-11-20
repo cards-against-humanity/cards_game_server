@@ -56,35 +56,7 @@ func initSocket(so *socketio.Socket, db *sql.DB, sh *socket.Handler, games *game
 		fmt.Println("A user has disconnected")
 		sh.Remove(so)
 	})
-	// Game Logic Events
-	(*so).On("refreshgame", func() {
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	(*so).On("refreshlist", func() {
-		// TODO - Change nil to actual game list
-		sh.SendActionToUser(u.ID, socket.Action{Type: "games/SET_GAMES", Payload: nil})
-	})
-	(*so).On("join", func(gn string) {
-		if games.JoinGame(u, gn) == nil {
-		}
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	(*so).On("leave", func() {
-		games.LeaveGame(u)
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/RESET_GAME_STATE", Payload: nil})
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	(*so).On("kickplayer", func() {
-		games.LeaveGame(u)
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/RESET_GAME_STATE", Payload: nil})
-		sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
-	})
-	// TODO - Allow function to accept other input types without crashing the server
-	(*so).On("playcard", func(cID int) {
-		games.PlayCard(u, cID)
-	})
-	(*so).On("vote", func() {
-	})
+	sh.SendActionToUser(u.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: games.GetStateForUser(u)})
 }
 
 // GameCreateMessage JSON structure for HTTP requests to the game creation endpoint
@@ -147,6 +119,21 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 
 		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
+	mux.HandleFunc(path+"/stop", func(w http.ResponseWriter, r *http.Request) {
+		u, err := user.GetByRequest(r, db)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		err = gl.StopGame(u.ID)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
+	})
 	mux.HandleFunc(path+"/join", func(w http.ResponseWriter, r *http.Request) {
 		u, err := user.GetByRequest(r, db)
 		if err != nil {
@@ -160,15 +147,9 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		var msg string
-		err = json.Unmarshal(b, &msg)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
 
-		gl.JoinGame(u, msg)
-		json.NewEncoder(w).Encode(true)
+		gl.JoinGame(u, string(b))
+		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
 	})
 	mux.HandleFunc(path+"/leave", func(w http.ResponseWriter, r *http.Request) {
 		u, err := user.GetByRequest(r, db)

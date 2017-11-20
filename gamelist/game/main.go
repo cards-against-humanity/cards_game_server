@@ -56,35 +56,32 @@ type GenericState struct {
 }
 
 // CreateGame .
-func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, socketHandler *socket.Handler) (Game, error) {
+func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, socketHandler *socket.Handler) (*Game, error) {
 	if len(name) > 64 {
-		return Game{}, errors.New("Game name must not exceed 64 characters")
+		return &Game{}, errors.New("Game name must not exceed 64 characters")
 	}
 	// TODO - Get min black card count from config file instead of hardcoding to 10
 	if len(blackCards) < 10 {
-		return Game{}, errors.New("Insufficient number of black cards")
+		return &Game{}, errors.New("Insufficient number of black cards")
 	}
 	// TODO - Get min white card count from config file instead of hardcoding
 	if len(whiteCards) < (maxPlayers * 10) {
-		return Game{}, errors.New("Insufficient number of white cards")
+		return &Game{}, errors.New("Insufficient number of white cards")
 	}
 	if maxPlayers < 3 {
-		return Game{}, errors.New("Max players must be at least 3")
+		return &Game{}, errors.New("Max players must be at least 3")
 	}
 	if maxPlayers > 20 {
-		return Game{}, errors.New("Max players must not exceed 20")
+		return &Game{}, errors.New("Max players must not exceed 20")
 	}
-	return Game{
+	game := Game{
 		Name:          name,
 		MaxPlayers:    maxPlayers,
-		Players:       []player{},
 		socketHandler: socketHandler,
 		whiteDraw:     whiteCards,
-		whiteDiscard:  []card.WhiteCard{},
-		whitePlayed:   make(map[int][]card.WhiteCard),
 		BlackDraw:     blackCards,
-		BlackDiscard:  []card.BlackCard{},
-	}, nil
+	}
+	return &game, nil
 }
 
 // GetState returns the game state for a particular user (will return generic game state if user is not in the game)
@@ -125,10 +122,22 @@ func (g *Game) Start(uID int) error {
 	if g.ownerID != uID {
 		return errors.New("Only the owner can start the game")
 	}
-	if g.timer != nil {
+	if g.isRunning() {
 		return errors.New("Game is already running")
 	}
 	g.next()
+	return nil
+}
+
+// Stop .
+func (g *Game) Stop(uID int) error {
+	if g.ownerID != uID {
+		return errors.New("Only the owner can stop the game")
+	}
+	if !g.isRunning() {
+		return errors.New("Game is not running")
+	}
+	g.stop()
 	return nil
 }
 
@@ -140,6 +149,7 @@ func (g *Game) Join(u user.User) {
 			g.ownerID = u.ID
 		}
 	}
+	g.updateUserStates()
 }
 
 // Leave .
@@ -148,17 +158,22 @@ func (g *Game) Leave(pID int) {
 		if p.user.ID == pID {
 			g.Players = append(g.Players[:i], g.Players[i+1:]...)
 			if pID == g.ownerID {
-				g.ownerID = g.Players[0].user.ID
+				if len(g.Players) == 0 {
+					g.ownerID = 0
+				} else {
+					g.ownerID = g.Players[0].user.ID
+				}
 			}
 			if pID == g.judgeID {
 				// TODO - Properly reassign judge
 			}
+			if len(g.Players) < 4 && g.isRunning() {
+				g.stop()
+			}
 			break
 		}
 	}
-	if len(g.Players) < 4 {
-		g.stop()
-	}
+	g.updateUserStates()
 }
 
 // KickUser allows the game owner to boot users from the game
@@ -187,7 +202,9 @@ func (g *Game) GetGenericState() GenericState {
 }
 
 func (g *Game) stop() {
-	g.timer.Stop()
+	if g.isRunning() {
+		g.timer.Stop()
+	}
 
 	for _, p := range g.Players {
 		g.whiteDraw = append(g.whiteDraw, p.hand...)
@@ -207,18 +224,18 @@ func (g *Game) stop() {
 	g.whitePlayed = make(map[int][]card.WhiteCard)
 
 	g.BlackDraw = append(g.BlackDraw, g.BlackDiscard...)
-	g.BlackDraw = append(g.BlackDraw, *g.BlackCurrent)
 	g.BlackDiscard = []card.BlackCard{}
-	g.BlackCurrent = nil
+	if g.BlackCurrent != nil {
+		g.BlackDraw = append(g.BlackDraw, *g.BlackCurrent)
+		g.BlackCurrent = nil
+	}
+	g.updateUserStates()
 }
 
 func (g *Game) next() {
 	g.timer = time.AfterFunc(time.Duration(5)*time.Second, func() {
 	})
-	// Update the states of all users in the game
-	for _, u := range g.Players {
-		g.socketHandler.SendActionToUser(u.user.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: g.GetState(u.user.ID)})
-	}
+	g.updateUserStates()
 }
 
 ///////////////////////
@@ -248,6 +265,9 @@ func (g Game) getPublicPlayerFromPrivate(pPriv player) Player {
 
 // userHasPlayed returns whether a user has played the correct number of cards for this round
 func (g Game) userHasPlayed(pID int) bool {
+	if g.BlackCurrent == nil {
+		return false
+	}
 	return g.BlackCurrent.AnswerFields == len(g.whitePlayed[pID])
 }
 
@@ -266,4 +286,14 @@ func (g Game) playerIsInGame(pID int) bool {
 		}
 	}
 	return false
+}
+
+func (g *Game) isRunning() bool {
+	return g.timer != nil
+}
+
+func (g *Game) updateUserStates() {
+	for _, u := range g.Players {
+		g.socketHandler.SendActionToUser(u.user.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: g.GetState(u.user.ID)})
+	}
 }
