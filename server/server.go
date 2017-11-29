@@ -71,7 +71,7 @@ func createGameMux(path string, db *sql.DB, sh *socket.Handler, gl *gamelist.Gam
 	mux.HandleFunc(path+"/state", func(w http.ResponseWriter, r *http.Request) {
 		u, err := user.GetByRequest(r, db)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			json.NewEncoder(w).Encode(nil)
 			return
 		}
 		json.NewEncoder(w).Encode(gl.GetStateForUser(u))
