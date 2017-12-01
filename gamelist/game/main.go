@@ -9,12 +9,16 @@ package game
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"../../card"
 	"../../server/socket"
 	"../../user"
 )
+
+const handSize = 8
+const minStartPlayers = 4 // Minimum number of players in a game in order to start playing
 
 // Game - A cards game
 type Game struct {
@@ -64,8 +68,7 @@ func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackC
 	if len(blackCards) < 10 {
 		return &Game{}, errors.New("Insufficient number of black cards")
 	}
-	// TODO - Get min white card count from config file instead of hardcoding
-	if len(whiteCards) < (maxPlayers * 10) {
+	if len(whiteCards) < (maxPlayers * handSize) {
 		return &Game{}, errors.New("Insufficient number of white cards")
 	}
 	if maxPlayers < 3 {
@@ -125,6 +128,9 @@ func (g *Game) Start(uID int) error {
 	if g.isRunning() {
 		return errors.New("Game is already running")
 	}
+	if len(g.Players) < minStartPlayers {
+		return errors.New("Need " + strconv.Itoa(minStartPlayers-len(g.Players)) + " more players to start")
+	}
 	g.next()
 	return nil
 }
@@ -167,7 +173,7 @@ func (g *Game) Leave(pID int) {
 			if pID == g.judgeID {
 				// TODO - Properly reassign judge
 			}
-			if len(g.Players) < 4 && g.isRunning() {
+			if len(g.Players) < minStartPlayers && g.isRunning() {
 				g.stop()
 			}
 			break
@@ -233,9 +239,54 @@ func (g *Game) stop() {
 }
 
 func (g *Game) next() {
-	g.timer = time.AfterFunc(time.Duration(5)*time.Second, func() {
-	})
+	switch g.stage {
+	case 0:
+		card.ShuffleWhiteDeck(&g.whiteDraw)
+		card.ShuffleBlackDeck(&g.BlackDraw)
+		g.judgeID = g.Players[0].user.ID
+		interval := time.Duration(30) * time.Second
+		g.timer = time.AfterFunc(interval, g.next)
+		time := time.Now().Add(interval)
+		g.nextStage = &time
+		g.BlackCurrent = &(g.BlackDraw[len(g.BlackDraw)-1])
+		g.BlackDraw = g.BlackDraw[:len(g.BlackDraw)-1]
+		g.fillPlayerHands()
+		break
+	case 1:
+		// Set nextStage, timer
+		break
+	case 2:
+		// Set nextStage, timer - And increment winner's score
+		break
+	case 3:
+		// Set nextStage, timer, clear whitePlayed, draw new cards for players (and shuffle if necessary), BlackCurrent (and shuffle if necessary), judgeID
+		break
+	}
+
+	g.timer = time.AfterFunc(time.Duration(5)*time.Second, g.next)
+
+	g.stage++
+	if g.stage == 4 {
+		g.stage = 1
+	}
+
 	g.updateUserStates()
+
+	// Name          string
+	// MaxPlayers    int
+	// Players       []player
+	// ownerID       int
+	// judgeID       int
+	// stage         int
+	// nextStage     *time.Time
+	// socketHandler *socket.Handler
+	// timer         *time.Timer
+	// whiteDraw     []card.WhiteCard
+	// whiteDiscard  []card.WhiteCard
+	// whitePlayed   map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
+	// BlackDraw     []card.BlackCard
+	// BlackDiscard  []card.BlackCard
+	// BlackCurrent  *card.BlackCard
 }
 
 ///////////////////////
@@ -295,5 +346,15 @@ func (g *Game) isRunning() bool {
 func (g *Game) updateUserStates() {
 	for _, u := range g.Players {
 		g.socketHandler.SendActionToUser(u.user.ID, socket.Action{Type: "game/SET_GAME_STATE", Payload: g.GetState(u.user.ID)})
+	}
+}
+
+func (g *Game) fillPlayerHands() {
+	for _, p := range g.Players {
+		for len(p.hand) < handSize {
+			card := g.whiteDraw[len(g.whiteDraw)-1]
+			g.whiteDraw = g.whiteDraw[:len(g.whiteDraw)-1]
+			p.hand = append(p.hand, card)
+		}
 	}
 }
