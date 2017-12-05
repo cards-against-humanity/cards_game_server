@@ -222,44 +222,54 @@ func (g *Game) stop() {
 	g.nextStage = nil
 	g.timer = nil
 
+	g.resetPlayedCards()
 	g.whiteDraw = append(g.whiteDraw, g.whiteDiscard...)
 	g.whiteDiscard = []card.WhiteCard{}
-	for _, list := range g.whitePlayed {
-		g.whiteDraw = append(g.whiteDraw, list...)
-	}
 	g.whitePlayed = make(map[int][]card.WhiteCard)
 
-	g.BlackDraw = append(g.BlackDraw, g.BlackDiscard...)
-	g.BlackDiscard = []card.BlackCard{}
-	if g.BlackCurrent != nil {
-		g.BlackDraw = append(g.BlackDraw, *g.BlackCurrent)
-		g.BlackCurrent = nil
-	}
+	g.resetBlackDeck()
 	g.updateUserStates()
 }
 
 func (g *Game) next() {
 	switch g.stage {
 	case 0:
-		card.ShuffleWhiteDeck(&g.whiteDraw)
-		card.ShuffleBlackDeck(&g.BlackDraw)
+		g.resetBlackDeck()
+		g.resetWhiteDeck()
 		g.judgeID = g.Players[0].user.ID
+
 		interval := time.Duration(30) * time.Second
 		g.timer = time.AfterFunc(interval, g.next)
 		time := time.Now().Add(interval)
 		g.nextStage = &time
+
 		g.BlackCurrent = &(g.BlackDraw[len(g.BlackDraw)-1])
 		g.BlackDraw = g.BlackDraw[:len(g.BlackDraw)-1]
 		g.fillPlayerHands()
 		break
 	case 1:
-		// Set nextStage, timer
+		interval := time.Duration(30) * time.Second
+		g.timer = time.AfterFunc(interval, g.next)
+		time := time.Now().Add(interval)
+		g.nextStage = &time
 		break
 	case 2:
-		// Set nextStage, timer - And increment winner's score
+		interval := time.Duration(30) * time.Second
+		g.timer = time.AfterFunc(interval, g.next)
+		time := time.Now().Add(interval)
+		g.nextStage = &time
+		// TODO - Increment winner's score
 		break
 	case 3:
-		// Set nextStage, timer, clear whitePlayed, draw new cards for players (and shuffle if necessary), BlackCurrent (and shuffle if necessary), judgeID
+		interval := time.Duration(30) * time.Second
+		g.timer = time.AfterFunc(interval, g.next)
+		time := time.Now().Add(interval)
+		g.nextStage = &time
+
+		g.resetPlayedCards()
+		g.fillPlayerHands()
+		g.setNextBlackCard()
+		// Set judgeID
 		break
 	}
 
@@ -352,9 +362,53 @@ func (g *Game) updateUserStates() {
 func (g *Game) fillPlayerHands() {
 	for _, p := range g.Players {
 		for len(p.hand) < handSize {
+			if len(g.whiteDraw) == 0 {
+				g.shuffleWhiteDeck()
+			}
 			card := g.whiteDraw[len(g.whiteDraw)-1]
 			g.whiteDraw = g.whiteDraw[:len(g.whiteDraw)-1]
 			p.hand = append(p.hand, card)
 		}
 	}
+}
+
+func (g *Game) resetPlayedCards() {
+	for i, l := range g.whitePlayed {
+		g.whiteDiscard = append(g.whiteDiscard, l...)
+		delete(g.whitePlayed, i)
+	}
+}
+
+func (g *Game) resetBlackDeck() {
+	g.BlackDraw = append(g.BlackDraw, g.BlackDiscard...)
+	g.BlackDiscard = []card.BlackCard{}
+	if g.BlackCurrent != nil {
+		g.BlackDraw = append(g.BlackDraw, *g.BlackCurrent)
+		g.BlackCurrent = nil
+	}
+	card.ShuffleBlackDeck(&g.BlackDraw)
+}
+
+func (g *Game) resetWhiteDeck() {
+	g.resetPlayedCards()
+	g.shuffleWhiteDeck()
+}
+
+func (g *Game) shuffleWhiteDeck() {
+	g.whiteDraw = append(g.whiteDraw, g.whiteDiscard...)
+	g.whiteDiscard = []card.WhiteCard{}
+	card.ShuffleWhiteDeck(&g.whiteDraw)
+}
+
+func (g *Game) setNextBlackCard() {
+	if len(g.BlackDraw) == 0 {
+		g.BlackDraw = g.BlackDiscard
+		g.BlackDiscard = []card.BlackCard{}
+		card.ShuffleBlackDeck(&g.BlackDraw)
+	}
+	if g.BlackCurrent != nil {
+		g.BlackDiscard = append(g.BlackDiscard, *g.BlackCurrent)
+	}
+	g.BlackCurrent = &g.BlackDraw[len(g.BlackDraw)-1]
+	g.BlackDraw = g.BlackDraw[:len(g.BlackDraw)-1]
 }
