@@ -59,7 +59,7 @@ type GenericState struct {
 	Owner user.User `json:"owner"`
 }
 
-// CreateGame .
+// CreateGame - Basic constructor for game struct
 func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackCards []card.BlackCard, socketHandler *socket.Handler) (*Game, error) {
 	if len(name) > 64 {
 		return &Game{}, errors.New("Game name must not exceed 64 characters")
@@ -87,7 +87,7 @@ func CreateGame(name string, maxPlayers int, whiteCards []card.WhiteCard, blackC
 	return &game, nil
 }
 
-// GetState returns the game state for a particular user (will return generic game state if user is not in the game)
+// GetState - Gets the game state for a particular user (will return spectator game state if user is not in the game)
 func (g *Game) GetState(pID int) UserState {
 	player, _ := g.getPrivatePlayer(pID)
 	knownCards := make(map[int][]card.WhiteCard)
@@ -120,7 +120,7 @@ func (g *Game) GetState(pID int) UserState {
 	}
 }
 
-// Start .
+// Start - Kicks off the game loop if the user is the game owner
 func (g *Game) Start(uID int) error {
 	if g.ownerID != uID {
 		return errors.New("Only the owner can start the game")
@@ -135,7 +135,7 @@ func (g *Game) Start(uID int) error {
 	return nil
 }
 
-// Stop .
+// Stop - Ends the game loop and resets user hands, card decks, etc...
 func (g *Game) Stop(uID int) error {
 	if g.ownerID != uID {
 		return errors.New("Only the owner can stop the game")
@@ -147,7 +147,7 @@ func (g *Game) Stop(uID int) error {
 	return nil
 }
 
-// Join .
+// Join - Adds a user to the game
 func (g *Game) Join(u user.User) {
 	if !g.playerIsInGame(u.ID) {
 		g.Players = append(g.Players, player{user: u, hand: []card.WhiteCard{}, score: 0})
@@ -158,7 +158,7 @@ func (g *Game) Join(u user.User) {
 	g.updateUserStates()
 }
 
-// Leave .
+// Leave - Removes a user from the game
 func (g *Game) Leave(pID int) {
 	for i, p := range g.Players {
 		if p.user.ID == pID {
@@ -182,23 +182,25 @@ func (g *Game) Leave(pID int) {
 	g.updateUserStates()
 }
 
-// KickUser allows the game owner to boot users from the game
+// KickUser - Allows the game owner to boot users from the game
 func (g *Game) KickUser(ownerID int, userID int) {
 	if ownerID == g.ownerID && ownerID != userID {
 		g.Leave(userID)
 	}
 }
 
-// PlayCard .
+// PlayCard - Plays a card for a particular user
 func (g *Game) PlayCard(pID int, cID int) error {
+	// TODO - Implement
 	return nil
 }
 
-// VoteCard allows the game judge to pick their favorite card
+// VoteCard - Allows the game judge to pick their favorite card
 func (g *Game) VoteCard(judgeID int, cardID int) {
+	// TODO - Implement (and change method header to return an error)
 }
 
-// GetGenericState returns a simple generic state for a game
+// GetGenericState - Returns a simple generic state for a game
 func (g *Game) GetGenericState() GenericState {
 	owner, _ := g.getPrivatePlayer(g.ownerID)
 	return GenericState{
