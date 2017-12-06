@@ -22,7 +22,7 @@ func CreateHandler() *Handler {
 }
 
 // Add registers reference to a socket
-func (h Handler) Add(userID int, s *socketio.Socket) {
+func (h *Handler) Add(userID int, s *socketio.Socket) {
 	if _, ok := h.uToS[userID]; ok {
 		h.uToS[userID] = append(h.uToS[userID], *s)
 	} else {
@@ -32,7 +32,7 @@ func (h Handler) Add(userID int, s *socketio.Socket) {
 }
 
 // Remove deletes reference to a socket
-func (h Handler) Remove(s *socketio.Socket) {
+func (h *Handler) Remove(s *socketio.Socket) {
 	if userID, ok := h.sToU[*s]; ok {
 		for i, soc := range h.uToS[userID] {
 			if *s == soc {
