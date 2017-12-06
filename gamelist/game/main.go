@@ -234,6 +234,9 @@ func (g *Game) stop() {
 }
 
 func (g *Game) next() {
+	if g.timer != nil {
+		g.timer.Stop()
+	}
 	switch g.stage {
 	case 0:
 		g.resetBlackDeck()
