@@ -1,13 +1,14 @@
 package user
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"../db"
 )
 
 // User .
@@ -18,8 +19,8 @@ type User struct {
 }
 
 // GetByID fetches a user from the database with a given ID
-func GetByID(id int, db *sql.DB) (User, error) {
-	rows, err := db.Query("SELECT name, email FROM users WHERE id = " + strconv.Itoa(id))
+func GetByID(id int) (User, error) {
+	rows, err := db.GetInstance().Query("SELECT name, email FROM users WHERE id = " + strconv.Itoa(id))
 	if err != nil {
 		return User{}, err
 	}
@@ -33,28 +34,28 @@ func GetByID(id int, db *sql.DB) (User, error) {
 }
 
 // GetByRequest gets the user that sent the HTTP request
-func GetByRequest(r *http.Request, db *sql.DB) (User, error) {
+func GetByRequest(r *http.Request) (User, error) {
 	cookie, e := r.Cookie("connect.sid")
 	if e != nil {
 		return User{}, e
 	}
-	return GetByCookie(cookie.Value, db)
+	return GetByCookie(cookie.Value)
 }
 
 // GetByCookie fetches a user from the database associated with a given cookie
-func GetByCookie(c string, db *sql.DB) (User, error) {
-	uid, e := getIDByCookie(c, db)
+func GetByCookie(c string) (User, error) {
+	uid, e := getIDByCookie(c)
 	if e != nil {
 		return User{}, e
 	}
-	return GetByID(uid, db)
+	return GetByID(uid)
 }
 
-func getIDByCookie(c string, db *sql.DB) (int, error) {
+func getIDByCookie(c string) (int, error) {
 	if len(c) > 32 {
 		c = c[4:36]
 	}
-	rows, err := db.Query(`SELECT data FROM "Sessions" WHERE sid = '` + c + `'`)
+	rows, err := db.GetInstance().Query(`SELECT data FROM "Sessions" WHERE sid = '` + c + `'`)
 	if err != nil {
 		fmt.Println(err)
 		return -1, errors.New("Cookie is not valid")

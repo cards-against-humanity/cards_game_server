@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+
+	"../db"
 )
 
 // GetCards .
-func GetCards(cpids []int, db *sql.DB) ([]BlackCard, []WhiteCard) {
-	_, err := db.Query("SELECT id FROM cardpacks WHERE" + generateOrQuery(`"id"`, intSliceToStringSlice(cpids)))
+func GetCards(cpids []int) ([]BlackCard, []WhiteCard) {
+	_, err := db.GetInstance().Query("SELECT id FROM cardpacks WHERE" + generateOrQuery(`"id"`, intSliceToStringSlice(cpids)))
 	if err != nil {
 		fmt.Printf("Error: one or more cardpack ID is invalid - %v", cpids)
 		return nil, nil
 	}
-	rows, err := db.Query("SELECT * FROM cards WHERE" + generateOrQuery(`"cardpackId"`, intSliceToStringSlice(cpids)))
+	rows, err := db.GetInstance().Query("SELECT * FROM cards WHERE" + generateOrQuery(`"cardpackId"`, intSliceToStringSlice(cpids)))
 	if err != nil {
 		fmt.Println("Error reading cards from database:", err)
 		return nil, nil
