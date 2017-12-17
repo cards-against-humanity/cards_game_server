@@ -1,8 +1,6 @@
 package user
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -49,23 +47,6 @@ func GetByCookie(c string) (User, error) {
 		return User{}, e
 	}
 	return GetByID(uid)
-}
-
-func getIDByCookie(c string) (int, error) {
-	if len(c) > 32 {
-		c = c[4:36]
-	}
-	rows, err := db.GetInstance().Query(`SELECT data FROM "Sessions" WHERE sid = '` + c + `'`)
-	if err != nil {
-		fmt.Println(err)
-		return -1, errors.New("Cookie is not valid")
-	}
-	var data string
-	if rows.Next() {
-		rows.Scan(&data)
-		return parseUserID(data), nil
-	}
-	return -1, errors.New("Cookie is not valid")
 }
 
 func parseUserID(data string) int {
