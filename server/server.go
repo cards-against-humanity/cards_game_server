@@ -180,7 +180,12 @@ func createGameMux(path string, sh *socket.Handler, gl *gamelist.GameList) http.
 			return
 		}
 
-		gl.PlayCard(u, msg)
+		err = gl.PlayCard(u, msg)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		json.NewEncoder(w).Encode(true)
 	})
 	mux.HandleFunc(path+"/kickplayer", func(w http.ResponseWriter, r *http.Request) {

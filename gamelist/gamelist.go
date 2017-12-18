@@ -115,10 +115,15 @@ func (gl *GameList) KickUser(owner user.User, uID int) {
 }
 
 // PlayCard allows user to play a card if they are not the judge
-func (gl *GameList) PlayCard(u user.User, cID int) {
+func (gl *GameList) PlayCard(u user.User, cID int) error {
 	if game, inGame := gl.gamesByUserID[u.ID]; inGame {
-		game.PlayCard(u.ID, cID)
+		err := game.PlayCard(u.ID, cID)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
+	return errors.New("Cannot play a card when you are not in a game")
 }
 
 // VoteCard allows user to pick a favorite card
