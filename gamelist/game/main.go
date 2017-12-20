@@ -286,22 +286,6 @@ func (g *Game) next() {
 	}
 
 	g.updateUserStates()
-
-	// Name          string
-	// MaxPlayers    int
-	// Players       []player
-	// ownerID       int
-	// judgeID       int
-	// stage         int
-	// nextStage     *time.Time
-	// socketHandler *socket.Handler
-	// timer         *time.Timer
-	// whiteDraw     []card.WhiteCard
-	// whiteDiscard  []card.WhiteCard
-	// whitePlayed   map[int][]card.WhiteCard // Maps user IDs to an array of cards they played this round
-	// BlackDraw     []card.BlackCard
-	// BlackDiscard  []card.BlackCard
-	// BlackCurrent  *card.BlackCard
 }
 
 ///////////////////////
