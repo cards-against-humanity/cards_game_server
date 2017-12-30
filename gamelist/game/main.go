@@ -202,7 +202,28 @@ func (g *Game) KickUser(ownerID int, userID int) {
 
 // PlayCard - Plays a card for a particular user
 func (g *Game) PlayCard(pID int, cID int) error {
-	// TODO - Implement
+	if g.stage != 1 {
+		return errors.New("Cannot play cards at this time")
+	}
+	if g.judgeID == pID {
+		return errors.New("Cannot play cards as the judge")
+	}
+	if len(g.whitePlayed[pID]) >= g.BlackCurrent.AnswerFields {
+		if g.BlackCurrent.AnswerFields == 1 {
+			return errors.New("You have already played a card this round")
+		}
+		return errors.New("You have already played all cards for this round")
+	}
+	card := g.popCardFromHand(pID, cID)
+	if card == nil {
+		return errors.New("Cannot play a card that you do not have")
+	}
+
+	g.whitePlayed[pID] = append(g.whitePlayed[pID], *card)
+	if g.allUsersHavePlayed() {
+		g.next()
+	}
+	g.updateUserStates()
 	return nil
 }
 
@@ -382,4 +403,29 @@ func (g *Game) setNextBlackCard() {
 	}
 	g.BlackCurrent = &g.BlackDraw[len(g.BlackDraw)-1]
 	g.BlackDraw = g.BlackDraw[:len(g.BlackDraw)-1]
+}
+
+func (g *Game) popCardFromHand(pID int, cID int) *card.WhiteCard {
+	player, err := g.getPrivatePlayer(pID)
+	if err != nil {
+		return nil
+	}
+
+	for i, c := range player.hand {
+		if c.ID == cID {
+			card := player.hand[i]
+			player.hand = append(player.hand[:i], player.hand[i+1:]...)
+			return &card
+		}
+	}
+	return nil
+}
+
+func (g Game) allUsersHavePlayed() bool {
+	for _, c := range g.whitePlayed {
+		if len(c) < g.BlackCurrent.AnswerFields {
+			return false
+		}
+	}
+	return true
 }
