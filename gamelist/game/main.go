@@ -170,8 +170,19 @@ func (g *Game) Leave(pID int) {
 					g.ownerID = g.Players[0].user.ID
 				}
 			}
+			if cards, exists := g.whitePlayed[pID]; exists {
+				g.whiteDiscard = append(g.whiteDiscard, cards...)
+				delete(g.whitePlayed, pID)
+			}
 			if pID == g.judgeID {
-				// TODO - Properly reassign judge
+				g.judgeID = g.Players[0].user.ID
+				if g.stage == 1 || g.stage == 2 {
+					g.resetPlayedCards()
+					g.fillPlayerHands()
+					g.setNextBlackCard()
+					g.stage = 1
+					g.next()
+				}
 			}
 			if len(g.Players) < minStartPlayers && g.isRunning() {
 				g.stop()
