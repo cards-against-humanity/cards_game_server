@@ -20,7 +20,7 @@ type player struct {
 	score int
 }
 
-func (g Game) getPrivatePlayer(pID int) (player, error) {
+func (g *Game) getPrivatePlayer(pID int) (player, error) {
 	for _, p := range g.Players {
 		if p.user.ID == pID {
 			return p, nil
