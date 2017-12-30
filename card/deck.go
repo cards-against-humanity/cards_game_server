@@ -2,14 +2,12 @@ package card
 
 import (
 	"math/rand"
-	"time"
 )
 
 // TODO - Reduce to single functions for both white and black cards
 
 // ShuffleBlackDeck randomizes a deck's order
 func ShuffleBlackDeck(s *[]BlackCard) {
-	rand.Seed(time.Now().UTC().UnixNano())
 	for i := range *s {
 		swapB(i, randInt(i, len(*s)), s)
 	}
@@ -17,7 +15,6 @@ func ShuffleBlackDeck(s *[]BlackCard) {
 
 // ShuffleWhiteDeck randomizes a deck's order
 func ShuffleWhiteDeck(s *[]WhiteCard) {
-	rand.Seed(time.Now().UTC().UnixNano())
 	for i := range *s {
 		swapW(i, randInt(i, len(*s)), s)
 	}
