@@ -228,8 +228,9 @@ func (g *Game) PlayCard(pID int, cID int) error {
 }
 
 // VoteCard - Allows the game judge to pick their favorite card
-func (g *Game) VoteCard(judgeID int, cardID int) {
+func (g *Game) VoteCard(judgeID int, cardID int) error {
 	// TODO - Implement (and change method header to return an error)
+	return nil
 }
 
 // GetGenericState - Returns a simple generic state for a game

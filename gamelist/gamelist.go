@@ -127,10 +127,11 @@ func (gl *GameList) PlayCard(u user.User, cID int) error {
 }
 
 // VoteCard allows user to pick a favorite card
-func (gl *GameList) VoteCard(judge user.User, cID int) {
+func (gl *GameList) VoteCard(judge user.User, cID int) error {
 	if game, inGame := gl.gamesByUserID[judge.ID]; inGame {
-		game.VoteCard(judge.ID, cID)
+		return game.VoteCard(judge.ID, cID)
 	}
+	return errors.New("Must be in a game to upvote a card")
 }
 
 // GetList fetches a list of all current games

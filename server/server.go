@@ -231,7 +231,12 @@ func createGameMux(path string, sh *socket.Handler, gl *gamelist.GameList) http.
 			return
 		}
 
-		gl.VoteCard(u, msg)
+		err = gl.VoteCard(u, msg)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		json.NewEncoder(w).Encode(true)
 	})
 	return mux
