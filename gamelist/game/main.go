@@ -229,7 +229,24 @@ func (g *Game) PlayCard(pID int, cID int) error {
 
 // VoteCard - Allows the game judge to pick their favorite card
 func (g *Game) VoteCard(judgeID int, cardID int) error {
-	// TODO - Implement (and change method header to return an error)
+	if g.judgeID != judgeID {
+		return errors.New("Must be the judge to upvote a card")
+	}
+	if g.stage != 2 {
+		return errors.New("Cannot upvote a card at this time")
+	}
+	playerID := g.cardPlayerID(cardID)
+	if playerID == -1 {
+		return errors.New("This card was not played by anyone")
+	}
+
+	player, err := g.getPrivatePlayer(playerID)
+	if err != nil {
+		return err
+	}
+
+	player.score++
+	g.next()
 	return nil
 }
 
@@ -296,7 +313,6 @@ func (g *Game) next() {
 		g.timer = time.AfterFunc(interval, g.next)
 		time := time.Now().Add(interval)
 		g.nextStage = &time
-		// TODO - Increment winner's score
 		break
 	case 3:
 		interval := time.Duration(30) * time.Second
@@ -429,4 +445,15 @@ func (g Game) allUsersHavePlayed() bool {
 		}
 	}
 	return true
+}
+
+// Returns the user ID of the user who has played a particular card this round (returns -1 if no one played that card)
+func (g *Game) cardPlayerID(cID int) int {
+	for _, cl := range g.whitePlayed {
+		for _, c := range cl {
+			if c.ID == cID {
+			}
+		}
+	}
+	return -1
 }
