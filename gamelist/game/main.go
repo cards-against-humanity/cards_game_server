@@ -444,7 +444,7 @@ func (g *Game) popCardFromHand(pID int, cID int) *card.WhiteCard {
 
 func (g Game) allUsersHavePlayed() bool {
 	for _, p := range g.Players {
-		if len(g.whitePlayed[p.user.ID]) < g.BlackCurrent.AnswerFields {
+		if p.user.ID != g.judgeID && len(g.whitePlayed[p.user.ID]) < g.BlackCurrent.AnswerFields {
 			return false
 		}
 	}
