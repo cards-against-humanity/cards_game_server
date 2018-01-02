@@ -1,10 +1,14 @@
 package game
 
-import "testing"
-import "../../card"
-import "../../server/socket"
-import "../../user"
-import "strings"
+import (
+	"fmt"
+	"strings"
+	"testing"
+
+	"../../card"
+	"../../server/socket"
+	"../../user"
+)
 
 func TestGame(t *testing.T) {
 	var game *Game
@@ -51,6 +55,50 @@ func TestGame(t *testing.T) {
 	game.Start(7)
 	if game.judgeID < 7 || game.judgeID > 10 {
 		t.Errorf("Judge ID should be assigned to a player that is in the game (expected user ID of between 7 and 10 but got %v)", game.judgeID)
+	}
+
+	// Game should stop when player count drops below a certain threshold
+	game, _ = createMockGame()
+	for i := 1; i <= minStartPlayers; i++ {
+		game.Join(createMockUser(i))
+	}
+	game.Start(1)
+	if !game.isRunning() {
+		t.Errorf("Game should be running")
+	}
+	game.Leave(1)
+	if game.isRunning() {
+		t.Errorf("Game should not be running")
+	}
+
+	// Should give cards to players once the game is started
+	game, _ = createMockGame()
+	for i := 1; i <= minStartPlayers; i++ {
+		game.Join(createMockUser(i))
+	}
+	game.Start(1)
+	for _, p := range game.Players {
+		if len(p.hand) != handSize {
+			t.Errorf(fmt.Sprintf("Player should have %v cards in their hand, but instead had %v", handSize, len(p.hand)))
+		}
+	}
+
+	// Game should progress to judge phase once all players have selected a card
+	game, _ = createMockGame()
+	for i := 1; i <= minStartPlayers; i++ {
+		game.Join(createMockUser(i))
+	}
+	game.Start(1)
+	for i := 2; i <= minStartPlayers; i++ {
+		player, _ := game.getPrivatePlayer(i)
+		err := game.PlayCard(i, player.hand[0].ID)
+		fmt.Println(err)
+		if err != nil {
+			t.Errorf("User should be able to play a card")
+		}
+	}
+	if game.stage != 2 {
+		t.Errorf("Game should automatically enter judge phase once all players have selected cards")
 	}
 }
 
