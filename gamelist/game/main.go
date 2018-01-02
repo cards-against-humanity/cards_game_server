@@ -131,6 +131,7 @@ func (g *Game) Start(uID int) error {
 	if len(g.Players) < minStartPlayers {
 		return errors.New("Need " + strconv.Itoa(minStartPlayers-len(g.Players)) + " more players to start")
 	}
+	g.fillPlayerHands()
 	g.next()
 	return nil
 }
@@ -154,6 +155,7 @@ func (g *Game) Join(u user.User) {
 		if len(g.Players) == 1 {
 			g.ownerID = u.ID
 		}
+		// TODO - Give player a hand if game is in progress
 	}
 	g.updateUserStates()
 }
@@ -369,14 +371,14 @@ func (g *Game) updateUserStates() {
 }
 
 func (g *Game) fillPlayerHands() {
-	for _, p := range g.Players {
-		for len(p.hand) < handSize {
+	for i := 0; i < len(g.Players); i++ {
+		for len(g.Players[i].hand) < handSize {
 			if len(g.whiteDraw) == 0 {
 				g.shuffleWhiteDeck()
 			}
 			card := g.whiteDraw[len(g.whiteDraw)-1]
 			g.whiteDraw = g.whiteDraw[:len(g.whiteDraw)-1]
-			p.hand = append(p.hand, card)
+			g.Players[i].hand = append(g.Players[i].hand, card)
 		}
 	}
 }
