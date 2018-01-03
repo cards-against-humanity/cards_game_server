@@ -453,9 +453,10 @@ func (g Game) allUsersHavePlayed() bool {
 
 // Returns the user ID of the user who has played a particular card this round (returns -1 if no one played that card)
 func (g *Game) cardPlayerID(cID int) int {
-	for _, cl := range g.whitePlayed {
+	for pID, cl := range g.whitePlayed {
 		for _, c := range cl {
 			if c.ID == cID {
+				return pID
 			}
 		}
 	}

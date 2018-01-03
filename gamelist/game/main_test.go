@@ -111,6 +111,28 @@ func TestGame(t *testing.T) {
 	if err.Error() != "Cannot play cards as the judge" {
 		t.Errorf("Judge should not be able to play a card")
 	}
+
+	// Judge can select a card
+	game, _ = createMockGame()
+	for i := 1; i <= minStartPlayers; i++ {
+		game.Join(createMockUser(i))
+	}
+	game.Start(1)
+	for i := 2; i <= minStartPlayers; i++ {
+		player, _ := game.getPrivatePlayer(i)
+		err := game.PlayCard(i, player.hand[0].ID)
+		fmt.Println(err)
+		if err != nil {
+			t.Errorf("User should be able to play a card")
+		}
+	}
+	err = game.VoteCard(1, game.whitePlayed[2][0].ID)
+	if err != nil {
+		t.Errorf("Judge should be able to vote a card: " + err.Error())
+	}
+	if game.stage != 3 {
+		t.Errorf("Game should progress to scoring stage after the judge has voted")
+	}
 }
 
 func createMockUser(id int) user.User {
