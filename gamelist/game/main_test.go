@@ -100,6 +100,17 @@ func TestGame(t *testing.T) {
 	if game.stage != 2 {
 		t.Errorf("Game should automatically enter judge phase once all players have selected cards")
 	}
+
+	// Judge should not be able to play a card
+	game, _ = createMockGame()
+	for i := 1; i <= minStartPlayers; i++ {
+		game.Join(createMockUser(i))
+	}
+	game.Start(1)
+	err = game.PlayCard(1, 1)
+	if err.Error() != "Cannot play cards as the judge" {
+		t.Errorf("Judge should not be able to play a card")
+	}
 }
 
 func createMockUser(id int) user.User {
