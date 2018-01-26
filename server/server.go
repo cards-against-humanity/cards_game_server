@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/googollee/go-socket.io"
 	"github.com/rs/cors"
@@ -19,7 +20,7 @@ import (
 // StartHTTP begins the socket server
 func StartHTTP() {
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{os.Getenv("API_URL")},
 		AllowCredentials: true,
 	})
 	sh := socket.CreateHandler()
